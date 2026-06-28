@@ -11,8 +11,7 @@ namespace ResolutionSwitcher.Main
         private ConfigManager _configManager;
         private List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
-        private Button _settingsBtn;
-        private Button _aboutBtn;
+        private Panel _titlePanel;
 
         public MainForm()
         {
@@ -24,10 +23,16 @@ namespace ResolutionSwitcher.Main
         private void MainForm_Resize(object sender, EventArgs e)
         {
             // Reposition buttons when window resizes
-            if (_settingsBtn != null)
-                _settingsBtn.Left = this.Width - 150;
-            if (_aboutBtn != null)
-                _aboutBtn.Left = this.Width - 70;
+            if (_titlePanel != null && _titlePanel.Controls.Count >= 2)
+            {
+                var settingsBtn = _titlePanel.Controls[0] as Button;
+                var aboutBtn = _titlePanel.Controls[1] as Button;
+                
+                if (settingsBtn != null)
+                    settingsBtn.Left = this.Width - 130;
+                if (aboutBtn != null)
+                    aboutBtn.Left = this.Width - 70;
+            }
         }
 
         private void SetupUI()
@@ -47,28 +52,27 @@ namespace ResolutionSwitcher.Main
             int controlWidth = this.Width - (padding * 2) - 20;
 
             // Title bar with buttons
-            var titlePanel = new Panel
+            _titlePanel = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 60,
                 BackColor = Color.FromArgb(240, 240, 240)
             };
 
-            _settingsBtn = new Button
+            var settingsBtn = new Button
             {
                 Text = "⚙️",
                 Width = 50,
                 Height = 40,
-                Left = this.Width - 150,
+                Left = this.Width - 130,
                 Top = 10,
                 Font = new Font("Arial", 18),
                 BackColor = Color.FromArgb(192, 192, 192),
-                ForeColor = Color.Black,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                ForeColor = Color.Black
             };
-            _settingsBtn.Click += SettingsBtn_Click;
+            settingsBtn.Click += SettingsBtn_Click;
 
-            _aboutBtn = new Button
+            var aboutBtn = new Button
             {
                 Text = "?",
                 Width = 50,
@@ -77,14 +81,13 @@ namespace ResolutionSwitcher.Main
                 Top = 10,
                 Font = new Font("Arial", 16),
                 BackColor = Color.FromArgb(192, 192, 192),
-                ForeColor = Color.Black,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                ForeColor = Color.Black
             };
-            _aboutBtn.Click += AboutBtn_Click;
+            aboutBtn.Click += AboutBtn_Click;
 
-            titlePanel.Controls.Add(_settingsBtn);
-            titlePanel.Controls.Add(_aboutBtn);
-            this.Controls.Add(titlePanel);
+            _titlePanel.Controls.Add(settingsBtn);
+            _titlePanel.Controls.Add(aboutBtn);
+            this.Controls.Add(_titlePanel);
 
             // Scrollable content panel
             var scrollPanel = new Panel
@@ -399,7 +402,7 @@ namespace ResolutionSwitcher.Main
 
             var browseGameBtn = new Button
             {
-                Text = "Browse",
+                Text = "ADD",
                 Left = controlWidth - 80,
                 Top = yPos,
                 Width = 80,
@@ -463,27 +466,29 @@ namespace ResolutionSwitcher.Main
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 30,
+                Height = 40,
                 BackColor = Color.FromArgb(240, 240, 240),
                 Checked = true,
                 Name = "autoRestoreRadio",
                 Tag = "autoRestoreRadio",
-                Font = new Font("Segoe UI", 10)
+                Font = new Font("Segoe UI", 10),
+                AutoSize = false
             };
             scrollPanel.Controls.Add(autoRestoreRadio);
-            yPos += 40;
+            yPos += 50;
 
             var instantKillRadio = new RadioButton
             {
                 Text = "Instant Kill Mode (manual reset only)",
                 Left = padding,
                 Top = yPos,
-                Width = controlWidth - 120,
-                Height = 30,
+                Width = controlWidth - 140,
+                Height = 40,
                 BackColor = Color.FromArgb(240, 240, 240),
                 Name = "instantKillRadio",
                 Tag = "instantKillRadio",
-                Font = new Font("Segoe UI", 10)
+                Font = new Font("Segoe UI", 10),
+                AutoSize = false
             };
             scrollPanel.Controls.Add(instantKillRadio);
 
@@ -491,16 +496,19 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Learn More ▶",
                 Left = controlWidth - 100,
-                Top = yPos,
+                Top = yPos + 5,
                 Width = 120,
                 Height = 30,
                 BackColor = Color.FromArgb(240, 240, 240),
+                ForeColor = Color.Blue,
                 LinkColor = Color.Blue,
+                ActiveLinkColor = Color.Blue,
+                VisitedLinkColor = Color.Blue,
                 Font = new Font("Segoe UI", 10)
             };
             learnMoreBtn.LinkClicked += LearnMoreBtn_LinkClicked;
             scrollPanel.Controls.Add(learnMoreBtn);
-            yPos += 45;
+            yPos += 55;
 
             // Action buttons
             var sep3 = new Label
