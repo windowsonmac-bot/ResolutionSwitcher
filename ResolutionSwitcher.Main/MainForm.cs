@@ -8,6 +8,7 @@ namespace ResolutionSwitcher.Main
 {
     public class MainForm : Form
     {
+        private const float LabelColumnWidth = 90f;
         private ConfigManager? _configManager;
         private readonly List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
@@ -278,7 +279,7 @@ namespace ResolutionSwitcher.Main
 
             monitorLayout.Controls.Add(MakeLabel("Monitor:"), 0, 0);
             monitorLayout.Controls.Add(_monitorDropdown, 1, 0);
-            monitorLayout.Controls.Add(MakeLabel(string.Empty), 0, 1);
+            monitorLayout.Controls.Add(new Panel { Margin = Padding.Empty, Size = new Size(0, 0) }, 0, 1);
             monitorLayout.Controls.Add(_monitorDefaultLabel, 1, 1);
             monitorLayout.ResumeLayout(false);
             monitorGroup.Controls.Add(monitorLayout);
@@ -577,7 +578,7 @@ namespace ResolutionSwitcher.Main
                 Padding = new Padding(0),
                 Margin = new Padding(0)
             };
-            tl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
+            tl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, LabelColumnWidth));
             tl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             for (int i = 0; i < rows; i++)
             {
@@ -637,6 +638,7 @@ namespace ResolutionSwitcher.Main
             {
                 if (ReferenceEquals(child, _titlePanel) || ReferenceEquals(child, _statusPanel))
                 {
+                    // These panels use dedicated palette logic because they have custom chrome/status styling.
                     continue;
                 }
 

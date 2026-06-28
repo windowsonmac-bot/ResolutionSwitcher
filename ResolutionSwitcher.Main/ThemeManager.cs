@@ -70,7 +70,7 @@ namespace ResolutionSwitcher.Main
             InputBorderColor = ColorTranslator.FromHtml("#5A5A7E")
         };
 
-        private static readonly string ThemeConfigPath = Path.Combine(AppContext.BaseDirectory, "theme.cfg");
+        private static readonly string ThemeConfigFilePath = Path.Combine(AppContext.BaseDirectory, "theme.cfg");
 
         static ThemeManager()
         {
@@ -92,7 +92,6 @@ namespace ResolutionSwitcher.Main
         {
             if (CurrentTheme == theme)
             {
-                SaveTheme(theme);
                 return;
             }
 
@@ -126,9 +125,9 @@ namespace ResolutionSwitcher.Main
         {
             try
             {
-                if (File.Exists(ThemeConfigPath))
+                if (File.Exists(ThemeConfigFilePath))
                 {
-                    var raw = File.ReadAllText(ThemeConfigPath).Trim();
+                    var raw = File.ReadAllText(ThemeConfigFilePath).Trim();
                     if (raw.Equals("dark", StringComparison.OrdinalIgnoreCase))
                     {
                         return AppTheme.Dark;
@@ -147,7 +146,7 @@ namespace ResolutionSwitcher.Main
         {
             try
             {
-                File.WriteAllText(ThemeConfigPath, theme == AppTheme.Dark ? "dark" : "light");
+                File.WriteAllText(ThemeConfigFilePath, theme == AppTheme.Dark ? "dark" : "light");
             }
             catch
             {
