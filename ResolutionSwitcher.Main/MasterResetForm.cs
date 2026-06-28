@@ -29,9 +29,9 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "Master Reset";
-            Width = 520;
-            Height = 400;
-            MinimumSize = new Size(460, 340);
+            Width = 640;
+            Height = 500;
+            MinimumSize = new Size(560, 420);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.Sizable;
             AutoScaleMode = AutoScaleMode.Dpi;

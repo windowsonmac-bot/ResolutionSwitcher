@@ -9,6 +9,9 @@ namespace ResolutionSwitcher.Main
     public class MainForm : Form
     {
         private const float LabelColumnWidth = 90f;
+        private const string PresetSeparatorPrefix = "────";
+        private const int DefaultPresetIndex = 3;
+        private const string DefaultRefreshHz = "240";
         private ConfigManager? _configManager;
         private readonly List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
@@ -34,6 +37,7 @@ namespace ResolutionSwitcher.Main
         private ComboBox _monitorDropdown = null!;
         private ComboBox _profileDropdown = null!;
         private ComboBox _presetDropdown = null!;
+        private ComboBox _hzDropdown = null!;
         private TextBox _widthInput = null!;
         private TextBox _heightInput = null!;
 
@@ -51,8 +55,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(820, 740);
-            MinimumSize = new Size(600, 560);
+            ClientSize = new Size(820, 820);
+            MinimumSize = new Size(620, 620);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -354,7 +358,7 @@ namespace ResolutionSwitcher.Main
             monitorGroup.Controls.Add(monitorLayout);
 
             var resGroup = MakeGroup("Resolution");
-            var resLayout = MakeTwoColLayout(2);
+            var resLayout = MakeTwoColLayout(3);
             resLayout.SuspendLayout();
 
             _presetDropdown = new ComboBox
@@ -365,47 +369,62 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Margin = new Padding(0, 2, 0, 2)
             };
-            _presetDropdown.Items.Add("16:9  3840x2160  (2160p / 4K)");
-            _presetDropdown.Items.Add("16:9  2560x1440  (1440p)");
-            _presetDropdown.Items.Add("16:9  1920x1080  (1080p)");
-            _presetDropdown.Items.Add("16:9  1600x900   (900p)");
-            _presetDropdown.Items.Add("16:9  1366x768   (768p laptop)");
-            _presetDropdown.Items.Add("16:9  1280x720   (720p)");
-            _presetDropdown.Items.Add("16:9  1024x576   (576p)");
-            _presetDropdown.Items.Add("16:9  800x450    (450p)");
-            _presetDropdown.Items.Add("16:9  640x360    (360p)");
-            _presetDropdown.Items.Add("16:10  3840x2400  (2400p)");
-            _presetDropdown.Items.Add("16:10  2560x1600  (1600p)");
-            _presetDropdown.Items.Add("16:10  1920x1200  (1200p)");
-            _presetDropdown.Items.Add("16:10  1680x1050  (1050p)");
-            _presetDropdown.Items.Add("16:10  1440x900   (900p)");
-            _presetDropdown.Items.Add("16:10  1280x800   (800p)");
-            _presetDropdown.Items.Add("16:10  1024x640   (640p)");
-            _presetDropdown.Items.Add("16:10  800x500    (500p)");
-            _presetDropdown.Items.Add("16:10  640x400    (400p)");
-            _presetDropdown.Items.Add("4:3  2880x2160  (2160p)");
-            _presetDropdown.Items.Add("4:3  1920x1440  (1440p)");
-            _presetDropdown.Items.Add("4:3  1600x1200  (1200p)");
-            _presetDropdown.Items.Add("4:3  1440x1080  (1080p)");
-            _presetDropdown.Items.Add("4:3  1400x1050  (1050p)");
-            _presetDropdown.Items.Add("4:3  1280x960   (960p)");
-            _presetDropdown.Items.Add("4:3  1200x900   (900p)");
-            _presetDropdown.Items.Add("4:3  1024x768   (768p)");
-            _presetDropdown.Items.Add("4:3  960x720    (720p)");
-            _presetDropdown.Items.Add("4:3  800x600    (600p)");
-            _presetDropdown.Items.Add("4:3  640x480    (480p)");
-            _presetDropdown.Items.Add("5:4  2700x2160  (2160p)");
-            _presetDropdown.Items.Add("5:4  1800x1440  (1440p)");
-            _presetDropdown.Items.Add("5:4  1500x1200  (1200p)");
-            _presetDropdown.Items.Add("5:4  1350x1080  (1080p)");
-            _presetDropdown.Items.Add("5:4  1312x1050  (1050p)");
-            _presetDropdown.Items.Add("5:4  1280x1024  (1024p)");
-            _presetDropdown.Items.Add("5:4  1125x900   (900p)");
-            _presetDropdown.Items.Add("5:4  960x768    (768p)");
-            _presetDropdown.Items.Add("5:4  900x720    (720p)");
-            _presetDropdown.Items.Add("5:4  750x600    (600p)");
-            _presetDropdown.Items.Add("5:4  600x480    (480p)");
-            _presetDropdown.SelectedIndex = 0;
+            _presetDropdown.Items.AddRange(new object[]
+            {
+                $"{PresetSeparatorPrefix}──── 16:9 {PresetSeparatorPrefix}────",
+                "16:9  3840x2160  (2160p / 4K)",
+                "16:9  2560x1440  (1440p)",
+                "16:9  1920x1080  (1080p)",
+                "16:9  1600x900   (900p)",
+                "16:9  1366x768   (768p laptop)",
+                "16:9  1280x720   (720p)",
+                "16:9  1024x576   (576p)",
+                "16:9  800x450    (450p)",
+                "16:9  640x360    (360p)",
+                $"{PresetSeparatorPrefix}──── 16:10 {PresetSeparatorPrefix}───",
+                "16:10  3840x2400  (2400p)",
+                "16:10  2560x1600  (1600p)",
+                "16:10  1920x1200  (1200p)",
+                "16:10  1680x1050  (1050p)",
+                "16:10  1440x900   (900p)",
+                "16:10  1280x800   (800p)",
+                "16:10  1024x640   (640p)",
+                "16:10  800x500    (500p)",
+                "16:10  640x400    (400p)",
+                $"{PresetSeparatorPrefix}──── 4:3 {PresetSeparatorPrefix}─────",
+                "4:3  2880x2160  (2160p)",
+                "4:3  1920x1440  (1440p)",
+                "4:3  1600x1200  (1200p)",
+                "4:3  1440x1080  (1080p)",
+                "4:3  1400x1050  (1050p)",
+                "4:3  1280x960   (960p)",
+                "4:3  1200x900   (900p)",
+                "4:3  1024x768   (768p)",
+                "4:3  960x720    (720p)",
+                "4:3  800x600    (600p)",
+                "4:3  640x480    (480p)",
+                $"{PresetSeparatorPrefix}──── 5:4 {PresetSeparatorPrefix}─────",
+                "5:4  2700x2160  (2160p)",
+                "5:4  1800x1440  (1440p)",
+                "5:4  1500x1200  (1200p)",
+                "5:4  1350x1080  (1080p)",
+                "5:4  1312x1050  (1050p)",
+                "5:4  1280x1024  (1024p)",
+                "5:4  1125x900   (900p)",
+                "5:4  960x768    (768p)",
+                "5:4  900x720    (720p)",
+                "5:4  750x600    (600p)",
+                "5:4  600x480    (480p)"
+            });
+            _hzDropdown = new ComboBox
+            {
+                Name = "hzDropdown",
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Dock = DockStyle.Fill,
+                Font = new Font("Tahoma", 8f),
+                Margin = new Padding(0, 2, 0, 2)
+            };
+            _hzDropdown.Items.AddRange(new object[] { "60", "75", "120", "144", "165", "240", "360", "Custom..." });
 
             var customFlow = new FlowLayoutPanel
             {
@@ -417,21 +436,24 @@ namespace ResolutionSwitcher.Main
             };
             _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
             _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
-            var hzInput = new TextBox { Name = "hzInput", Text = "240", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
 
             customFlow.Controls.Add(new Label { Text = "W:", Width = 20, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f) });
             customFlow.Controls.Add(_widthInput);
             customFlow.Controls.Add(new Label { Text = "H:", Width = 24, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
             customFlow.Controls.Add(_heightInput);
-            customFlow.Controls.Add(new Label { Text = "Hz:", Width = 28, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
-            customFlow.Controls.Add(hzInput);
 
             resLayout.Controls.Add(MakeLabel("Preset:"), 0, 0);
             resLayout.Controls.Add(_presetDropdown, 1, 0);
-            resLayout.Controls.Add(MakeLabel("Custom:"), 0, 1);
-            resLayout.Controls.Add(customFlow, 1, 1);
+            resLayout.Controls.Add(MakeLabel("Refresh Hz:"), 0, 1);
+            resLayout.Controls.Add(_hzDropdown, 1, 1);
+            resLayout.Controls.Add(MakeLabel("Custom:"), 0, 2);
+            resLayout.Controls.Add(customFlow, 1, 2);
             resLayout.ResumeLayout(false);
             resGroup.Controls.Add(resLayout);
+            _hzDropdown.SelectedItem = DefaultRefreshHz;
+            _presetDropdown.SelectedIndex = DefaultPresetIndex;
+            _presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+            SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
             var gameGroup = MakeGroup("Game");
             var gameLayout = MakeTwoColLayout(2);
@@ -666,9 +688,78 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 3, 6, 3),
+                Margin = new Padding(0, 4, 6, 4),
                 AutoSize = false
             };
+        }
+
+        private void PresetDropdown_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (_presetDropdown.SelectedItem is not string selectedItem)
+            {
+                return;
+            }
+
+            if (selectedItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+            {
+                var nextIndex = _presetDropdown.SelectedIndex + 1;
+                while (nextIndex < _presetDropdown.Items.Count
+                    && _presetDropdown.Items[nextIndex] is string nextItem
+                    && nextItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+                {
+                    nextIndex++;
+                }
+
+                if (nextIndex < _presetDropdown.Items.Count)
+                {
+                    _presetDropdown.SelectedIndex = nextIndex;
+                    return;
+                }
+
+                var previousIndex = _presetDropdown.SelectedIndex - 1;
+                while (previousIndex >= 0
+                    && _presetDropdown.Items[previousIndex] is string previousItem
+                    && previousItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+                {
+                    previousIndex--;
+                }
+
+                if (previousIndex >= 0)
+                {
+                    _presetDropdown.SelectedIndex = previousIndex;
+                }
+
+                return;
+            }
+
+            SyncCustomResolutionFromPreset(selectedItem);
+        }
+
+        private void SyncCustomResolutionFromPreset(string? selectedItem)
+        {
+            if (string.IsNullOrWhiteSpace(selectedItem)
+                || selectedItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            var resolutionToken = selectedItem
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .FirstOrDefault(token => token.Contains('x'));
+
+            if (string.IsNullOrWhiteSpace(resolutionToken))
+            {
+                return;
+            }
+
+            var parts = resolutionToken.Split('x');
+            if (parts.Length != 2)
+            {
+                return;
+            }
+
+            _widthInput.Text = parts[0];
+            _heightInput.Text = parts[1];
         }
 
         private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
