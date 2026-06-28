@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Lightweight background monitor for auto-restore resolution functionality")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+158c833525939c806d7c2da95718cc27d10d4e2f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0c2db052a8f7d2de702e8ebc6efd9b1a529f232f")]
 [assembly: System.Reflection.AssemblyProductAttribute("ResolutionSwitcher.Monitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ResolutionSwitcher.Monitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
