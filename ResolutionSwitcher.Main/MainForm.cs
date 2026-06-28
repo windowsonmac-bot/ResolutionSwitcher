@@ -9,6 +9,7 @@ namespace ResolutionSwitcher.Main
     public class MainForm : Form
     {
         private const float LabelColumnWidth = 90f;
+        private const string PresetSeparatorPrefix = "────";
         private ConfigManager? _configManager;
         private readonly List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
@@ -413,8 +414,6 @@ namespace ResolutionSwitcher.Main
                 "5:4  750x600    (600p)",
                 "5:4  600x480    (480p)"
             });
-            _presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
-
             _hzDropdown = new ComboBox
             {
                 Name = "hzDropdown",
@@ -424,7 +423,6 @@ namespace ResolutionSwitcher.Main
                 Margin = new Padding(0, 2, 0, 2)
             };
             _hzDropdown.Items.AddRange(new object[] { "60", "75", "120", "144", "165", "240", "360", "Custom..." });
-            _hzDropdown.SelectedItem = "240";
 
             var customFlow = new FlowLayoutPanel
             {
@@ -450,7 +448,10 @@ namespace ResolutionSwitcher.Main
             resLayout.Controls.Add(customFlow, 1, 2);
             resLayout.ResumeLayout(false);
             resGroup.Controls.Add(resLayout);
+            _hzDropdown.SelectedItem = "240";
             _presetDropdown.SelectedIndex = 3;
+            _presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+            SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
             var gameGroup = MakeGroup("Game");
             var gameLayout = MakeTwoColLayout(2);
@@ -697,13 +698,46 @@ namespace ResolutionSwitcher.Main
                 return;
             }
 
-            if (selectedItem.StartsWith("────", StringComparison.Ordinal))
+            if (selectedItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
             {
-                if (_presetDropdown.SelectedIndex < _presetDropdown.Items.Count - 1)
+                var nextIndex = _presetDropdown.SelectedIndex + 1;
+                while (nextIndex < _presetDropdown.Items.Count
+                    && _presetDropdown.Items[nextIndex] is string nextItem
+                    && nextItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
                 {
-                    _presetDropdown.SelectedIndex += 1;
+                    nextIndex++;
                 }
 
+                if (nextIndex < _presetDropdown.Items.Count)
+                {
+                    _presetDropdown.SelectedIndex = nextIndex;
+                    return;
+                }
+
+                var previousIndex = _presetDropdown.SelectedIndex - 1;
+                while (previousIndex >= 0
+                    && _presetDropdown.Items[previousIndex] is string previousItem
+                    && previousItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+                {
+                    previousIndex--;
+                }
+
+                if (previousIndex >= 0)
+                {
+                    _presetDropdown.SelectedIndex = previousIndex;
+                }
+
+                return;
+            }
+
+            SyncCustomResolutionFromPreset(selectedItem);
+        }
+
+        private void SyncCustomResolutionFromPreset(string? selectedItem)
+        {
+            if (string.IsNullOrWhiteSpace(selectedItem)
+                || selectedItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+            {
                 return;
             }
 
