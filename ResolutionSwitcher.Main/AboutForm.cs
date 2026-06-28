@@ -194,7 +194,7 @@ Lightweight resolution switching for competitive gaming
 
 WHAT IT DOES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Instantly switches your monitor to stretched resolutions (4:3, 5:3)
+• Instantly switches your monitor to stretched resolutions (4:3, 5:4)
 • Saves your default monitor settings on first run
 • Launches games with custom resolutions applied
 • Auto-reverts resolution when game closes (Auto-Restore mode)
@@ -233,6 +233,9 @@ Log file:    resolutionswitcher.log (app folder, if logging enabled)
 
 AUTHOR & CREDITS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Created by:  windowsonmac
+AI Assisted: Claude Sonnet (Anthropic)
+
 Built for competitive gamers who want zero-overhead resolution switching.
 Inspired by DDU (Display Driver Uninstaller) UI philosophy:
 simple, direct, no fluff.";
@@ -250,9 +253,9 @@ simple, direct, no fluff.";
    • Store launch preferences per profile
 
 2. RESOLUTION PRESETS
-   • 8+ common competitive ratios included:
-     - 960x720, 1080x810, 1280x960, 1440x1080 (4:3)
-     - 1152x690, 1440x864, 1728x1036 (5:3)
+   • Common competitive ratios included:
+     - 960x720, 1024x768, 1280x960, 1440x1080 (4:3)
+     - 1280x1024 (5:4)
    • Custom resolution support
    • Refresh rate customization
    • All presets in one dropdown

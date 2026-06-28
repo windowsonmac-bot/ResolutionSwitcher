@@ -40,9 +40,9 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "Settings";
-            Width = 600;
-            Height = 480;
-            MinimumSize = new Size(480, 400);
+            Width = 900;
+            Height = 780;
+            MinimumSize = new Size(700, 600);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.Sizable;
             AutoScaleMode = AutoScaleMode.Dpi;
@@ -238,7 +238,8 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
                 AutoSize = true,
-                WrapContents = false
+                WrapContents = false,
+                Padding = new Padding(0, 6, 0, 6)
             };
 
             var scanSteamButton = new Button
@@ -246,7 +247,8 @@ namespace ResolutionSwitcher.Main
                 Text = "Scan Steam Library",
                 Width = 140,
                 Height = 26,
-                Font = new Font("Tahoma", 8f, FontStyle.Bold)
+                Font = new Font("Tahoma", 8f, FontStyle.Bold),
+                Margin = new Padding(0, 2, 0, 2)
             };
             scanSteamButton.Click += (_, _) => MessageBox.Show(
                 "Steam library scanning will be available in the next update.",
@@ -259,7 +261,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Click to scan and import your Steam games",
                 AutoSize = true,
                 Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
-                Margin = new Padding(10, 7, 0, 0)
+                Margin = new Padding(10, 5, 0, 0)
             };
 
             steamFlow.Controls.Add(scanSteamButton);
@@ -277,7 +279,7 @@ namespace ResolutionSwitcher.Main
         private TabPage CreateHotkeysTab()
         {
             var tab = new TabPage("Hotkeys");
-            var root = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
+            var root = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10), AutoScroll = true };
 
             var group = new GroupBox
             {
@@ -289,12 +291,15 @@ namespace ResolutionSwitcher.Main
 
             var layout = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 ColumnCount = 1,
                 RowCount = 3,
                 AutoSize = true
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             var noteLabel = new Label
             {
@@ -311,7 +316,7 @@ namespace ResolutionSwitcher.Main
                 AutoSize = true,
                 Margin = new Padding(0, 0, 0, 8)
             };
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 58f));
 
@@ -347,7 +352,8 @@ namespace ResolutionSwitcher.Main
                 Text = action,
                 AutoSize = true,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Margin = new Padding(0, 5, 8, 5)
+                Margin = new Padding(0, 3, 8, 3),
+                Padding = new Padding(0, 3, 0, 0)
             };
 
             var textBox = new TextBox
@@ -355,9 +361,10 @@ namespace ResolutionSwitcher.Main
                 Name = textBoxName,
                 Text = defaultValue,
                 Width = 140,
-                Font = new Font("Tahoma", 8f),
+                Font = new Font("Tahoma", 9f),
                 ReadOnly = false,
-                Anchor = AnchorStyles.Left
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 3, 0, 3)
             };
             _hotkeyDefaults[textBox] = defaultValue;
 
@@ -366,7 +373,8 @@ namespace ResolutionSwitcher.Main
                 Text = "Reset",
                 Width = 52,
                 Height = 23,
-                Font = new Font("Tahoma", 7.5f)
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(0, 3, 0, 3)
             };
             resetButton.Click += (_, _) => textBox.Text = _hotkeyDefaults[textBox];
 
