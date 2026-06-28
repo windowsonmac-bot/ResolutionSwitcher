@@ -34,7 +34,8 @@ namespace ResolutionSwitcher.Main
             MinimumSize = new Size(560, 420);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.Sizable;
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleDimensions = new SizeF(6F, 13F);
             Font = new Font("Tahoma", 8f);
 
             _titlePanel = new Panel
