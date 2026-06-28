@@ -100,6 +100,7 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 Height = 24,
                 Value = 0,
+                Style = ProgressBarStyle.Continuous,
                 Margin = new Padding(0, 0, 0, 8)
             };
 
@@ -209,6 +210,7 @@ namespace ResolutionSwitcher.Main
             _progressLabel.BackColor = theme.FormBackground;
             _progressLabel.ForeColor = theme.TextColor;
             _stepsPanel.BackColor = theme.SectionBackground;
+            _stepsPanel.ForeColor = theme.TextColor;
             _stepsBox.BackColor = theme.SectionBackground;
             _stepsBox.ForeColor = theme.TextColor;
 
