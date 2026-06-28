@@ -3,11 +3,10 @@ using System.Windows.Forms;
 
 namespace ResolutionSwitcher.Main
 {
-    public partial class AboutForm : Form
+    public class AboutForm : Form
     {
         public AboutForm()
         {
-            InitializeComponent();
             InitializeUI();
         }
 
@@ -125,7 +124,7 @@ SYSTEM REQUIREMENTS
                 ForeColor = System.Drawing.Color.Black,
                 Font = new System.Drawing.Font("Segoe UI", 9),
                 Text = @"CORE FEATURES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. PROFILE SYSTEM
    • Create multiple game profiles
