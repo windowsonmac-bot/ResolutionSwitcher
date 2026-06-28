@@ -67,6 +67,9 @@ namespace ResolutionSwitcher.Monitor
         [STAThread]
         static int Main(string[] args)
         {
+            System.Diagnostics.Process.GetCurrentProcess().PriorityClass =
+                System.Diagnostics.ProcessPriorityClass.Idle;
+
             try
             {
                 // Parse command line arguments
