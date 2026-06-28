@@ -15,6 +15,8 @@ namespace ResolutionSwitcher.Main
 
         public MainForm()
         {
+            _configManager = null;
+            _detectedMonitors = new List<DisplayManager.MonitorInfo>();
             SetupUI();
             InitializeApplication();
             this.Resize += MainForm_Resize;
@@ -56,7 +58,8 @@ namespace ResolutionSwitcher.Main
             {
                 Dock = DockStyle.Top,
                 Height = 60,
-                BackColor = Color.FromArgb(224, 224, 224)
+                BackColor = Color.FromArgb(224, 224, 224),
+                BorderStyle = BorderStyle.FixedSingle
             };
 
             var settingsBtn = new Button
@@ -68,9 +71,7 @@ namespace ResolutionSwitcher.Main
                 Top = 5,
                 Font = new Font("Arial", 20),
                 BackColor = Color.FromArgb(224, 224, 224),
-                ForeColor = Color.Black,
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 2, BorderColor = Color.FromArgb(192, 192, 192) }
+                ForeColor = Color.Black
             };
             settingsBtn.Click += SettingsBtn_Click;
 
@@ -83,9 +84,7 @@ namespace ResolutionSwitcher.Main
                 Top = 5,
                 Font = new Font("Arial", 18),
                 BackColor = Color.FromArgb(224, 224, 224),
-                ForeColor = Color.Black,
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 2, BorderColor = Color.FromArgb(192, 192, 192) }
+                ForeColor = Color.Black
             };
             aboutBtn.Click += AboutBtn_Click;
 
@@ -152,9 +151,7 @@ namespace ResolutionSwitcher.Main
                 Width = 80,
                 Height = 35,
                 BackColor = Color.FromArgb(224, 224, 224),
-                Font = new Font("Segoe UI", 10),
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 1 }
+                Font = new Font("Segoe UI", 10)
             };
             profileFrame.Controls.Add(newProfileBtn);
 
@@ -166,9 +163,7 @@ namespace ResolutionSwitcher.Main
                 Width = 80,
                 Height = 35,
                 BackColor = Color.FromArgb(224, 224, 224),
-                Font = new Font("Segoe UI", 10),
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 1 }
+                Font = new Font("Segoe UI", 10)
             };
             profileFrame.Controls.Add(deleteProfileBtn);
 
@@ -461,9 +456,7 @@ namespace ResolutionSwitcher.Main
                 Width = controlWidth - 170,
                 Height = 35,
                 BackColor = Color.FromArgb(224, 224, 224),
-                Font = new Font("Segoe UI", 10),
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 1 }
+                Font = new Font("Segoe UI", 10)
             };
             browseGameBtn.Click += BrowseGameBtn_Click;
             gameFrame.Controls.Add(browseGameBtn);
@@ -587,9 +580,7 @@ namespace ResolutionSwitcher.Main
                 Width = (controlWidth - 45) / 3,
                 Height = 50,
                 BackColor = Color.FromArgb(224, 224, 224),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 2 }
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
             applyLaunchBtn.Click += LaunchGameBtn_Click;
             actionFrame.Controls.Add(applyLaunchBtn);
@@ -602,9 +593,7 @@ namespace ResolutionSwitcher.Main
                 Width = (controlWidth - 45) / 3,
                 Height = 50,
                 BackColor = Color.FromArgb(224, 224, 224),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 2 }
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
             applyOnlyBtn.Click += ApplyOnlyBtn_Click;
             actionFrame.Controls.Add(applyOnlyBtn);
@@ -617,9 +606,7 @@ namespace ResolutionSwitcher.Main
                 Width = (controlWidth - 45) / 3,
                 Height = 50,
                 BackColor = Color.FromArgb(224, 224, 224),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                FlatStyle = FlatStyle.Raised,
-                FlatAppearance = { BorderSize = 2 }
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
             };
             resetBtn.Click += ResetBtn_Click;
             actionFrame.Controls.Add(resetBtn);
@@ -696,7 +683,7 @@ namespace ResolutionSwitcher.Main
             }
         }
 
-        private void LaunchGameBtn_Click(object? sender, EventArgs e)
+        private void LaunchGameBtn_Click(object sender, EventArgs e)
         {
             _logger.LogInfo("Apply and Launch Game clicked");
             var statusLabel = this.Controls.Cast<Control>()
@@ -708,7 +695,7 @@ namespace ResolutionSwitcher.Main
             // TODO: Implement launch logic
         }
 
-        private void ApplyOnlyBtn_Click(object? sender, EventArgs e)
+        private void ApplyOnlyBtn_Click(object sender, EventArgs e)
         {
             _logger.LogInfo("Apply Only clicked");
             var statusLabel = this.Controls.Cast<Control>()
@@ -720,7 +707,7 @@ namespace ResolutionSwitcher.Main
             // TODO: Implement apply-only logic
         }
 
-        private void ResetBtn_Click(object? sender, EventArgs e)
+        private void ResetBtn_Click(object sender, EventArgs e)
         {
             _logger.LogInfo("Reset clicked");
             var statusLabel = this.Controls.Cast<Control>()
@@ -732,7 +719,7 @@ namespace ResolutionSwitcher.Main
             // TODO: Implement reset logic
         }
 
-        private void BrowseGameBtn_Click(object? sender, EventArgs e)
+        private void BrowseGameBtn_Click(object sender, EventArgs e)
         {
             _logger.LogInfo("Browse Game clicked");
             var openFileDialog = new OpenFileDialog
@@ -747,20 +734,20 @@ namespace ResolutionSwitcher.Main
             }
         }
 
-        private void SettingsBtn_Click(object? sender, EventArgs e)
+        private void SettingsBtn_Click(object sender, EventArgs e)
         {
             _logger.LogInfo("Settings clicked");
             // TODO: Open settings window
         }
 
-        private void AboutBtn_Click(object? sender, EventArgs e)
+        private void AboutBtn_Click(object sender, EventArgs e)
         {
             _logger.LogInfo("About clicked");
             var aboutForm = new AboutForm();
             aboutForm.ShowDialog(this);
         }
 
-        private void LearnMoreBtn_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+        private void LearnMoreBtn_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             _logger.LogInfo("Learn More clicked");
             var modeForm = new Form
