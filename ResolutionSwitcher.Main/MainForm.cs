@@ -21,7 +21,6 @@ namespace ResolutionSwitcher.Main
         private Panel _profileCardPanel = null!;
         private Panel _statusSeparatorLine = null!;
         private Label _titleLabel = null!;
-        private Label _subtitleLabel = null!;
         private Label _statusHeaderLabel = null!;
         private Label _monitorDefaultLabel = null!;
         private Label _profileCardLine1 = null!;
@@ -57,8 +56,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(780, 820);
-            MinimumSize = new Size(600, 640);
+            ClientSize = new Size(780, 760);
+            MinimumSize = new Size(600, 580);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -77,22 +76,13 @@ namespace ResolutionSwitcher.Main
 
             _titleLabel = new Label
             {
-                Text = "ResolutionSwitcher",
-                Dock = DockStyle.Fill,
-                Font = new Font("Tahoma", 13f, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft,
-                BackColor = Color.Transparent
-            };
-
-            _subtitleLabel = new Label
-            {
                 Text = "Display Resolution Manager",
-                Dock = DockStyle.Right,
-                AutoSize = false,
-                Width = 185,
-                Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
-                TextAlign = ContentAlignment.MiddleRight,
-                BackColor = Color.Transparent
+                Dock = DockStyle.Fill,
+                Font = new Font("Tahoma", 11f, FontStyle.Bold),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleLeft,
+                BackColor = Color.Transparent,
+                Padding = new Padding(8, 0, 0, 0)
             };
 
             var buttonStrip = new FlowLayoutPanel
@@ -173,7 +163,6 @@ namespace ResolutionSwitcher.Main
             buttonStrip.Controls.Add(_debugButton);
             buttonStrip.Controls.Add(_masterResetButton);
 
-            _titlePanel.Controls.Add(_subtitleLabel);
             _titlePanel.Controls.Add(buttonStrip);
             _titlePanel.Controls.Add(_titleLabel);
             _titlePanel.ResumeLayout(false);
@@ -181,7 +170,7 @@ namespace ResolutionSwitcher.Main
             _statusPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 120,
+                Height = 88,
                 MinimumSize = new Size(0, 96),
                 BorderStyle = BorderStyle.Fixed3D,
                 Padding = new Padding(8, 6, 8, 8)
@@ -304,7 +293,7 @@ namespace ResolutionSwitcher.Main
             {
                 Name = "_profileCardPanel",
                 BorderStyle = BorderStyle.Fixed3D,
-                Height = 56,
+                Height = 44,
                 Dock = DockStyle.Top,
                 Margin = new Padding(0, 0, 0, 8),
                 Padding = new Padding(8, 6, 8, 4)
@@ -654,7 +643,7 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Apply and Launch Game",
                 Dock = DockStyle.Fill,
-                Height = 36,
+                Height = 28,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 Margin = new Padding(2, 0, 2, 0)
             };
@@ -664,7 +653,7 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Apply Only",
                 Dock = DockStyle.Fill,
-                Height = 36,
+                Height = 28,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 Margin = new Padding(2, 0, 2, 0)
             };
@@ -674,7 +663,7 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Reset Resolution",
                 Dock = DockStyle.Fill,
-                Height = 36,
+                Height = 28,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 Margin = new Padding(2, 0, 2, 0)
             };
@@ -685,13 +674,13 @@ namespace ResolutionSwitcher.Main
             actionBtnLayout.Controls.Add(resetBtn, 2, 0);
             actionGroup.Controls.Add(actionBtnLayout);
 
-            mainLayout.Controls.Add(profileGroup, 0, 0);
-            mainLayout.Controls.Add(_profileCardPanel, 0, 1);
-            mainLayout.Controls.Add(monitorGroup, 0, 2);
-            mainLayout.Controls.Add(resGroup, 0, 3);
-            mainLayout.Controls.Add(gameGroup, 0, 4);
-            mainLayout.Controls.Add(launchGroup, 0, 5);
-            mainLayout.Controls.Add(actionGroup, 0, 6);
+            mainLayout.Controls.Add(actionGroup, 0, 0);
+            mainLayout.Controls.Add(profileGroup, 0, 1);
+            mainLayout.Controls.Add(_profileCardPanel, 0, 2);
+            mainLayout.Controls.Add(monitorGroup, 0, 3);
+            mainLayout.Controls.Add(resGroup, 0, 4);
+            mainLayout.Controls.Add(gameGroup, 0, 5);
+            mainLayout.Controls.Add(launchGroup, 0, 6);
 
             mainLayout.ResumeLayout(false);
             _scrollPanel.Controls.Add(mainLayout);
@@ -717,8 +706,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 8),
-                Padding = new Padding(8, 10, 8, 6),
+                Margin = new Padding(0, 0, 0, 4),
+                Padding = new Padding(6, 8, 6, 4),
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink
@@ -756,7 +745,7 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 4, 6, 4),
+                Margin = new Padding(0, 2, 6, 2),
                 AutoSize = false
             };
         }
@@ -851,7 +840,6 @@ namespace ResolutionSwitcher.Main
             _scrollPanel.BackColor = theme.FormBackground;
             _titlePanel.BackColor = theme.TitleBarColor;
             _titleLabel.ForeColor = theme.TitleBarTextColor;
-            _subtitleLabel.ForeColor = theme.SubtitleTextColor;
             _statusPanel.BackColor = theme.StatusBackground;
             _statusHeaderLabel.ForeColor = theme.StatusHeaderColor;
             _statusRichTextBox.BackColor = theme.StatusBackground;

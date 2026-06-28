@@ -47,7 +47,7 @@ namespace ResolutionSwitcher.Main
 
             _titleLabel = new Label
             {
-                Text = "Debug & Logging",
+                Text = "Debug && Logging",
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 13f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
