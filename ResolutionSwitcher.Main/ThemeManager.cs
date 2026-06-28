@@ -16,6 +16,7 @@ namespace ResolutionSwitcher.Main
         public Color FormBackground { get; init; }
         public Color SectionBackground { get; init; }
         public Color TextColor { get; init; }
+        public Color GrayTextColor { get; init; }
         public Color TitleBarColor { get; init; }
         public Color TitleBarTextColor { get; init; }
         public Color SubtitleTextColor { get; init; }
@@ -36,6 +37,7 @@ namespace ResolutionSwitcher.Main
             FormBackground = ColorTranslator.FromHtml("#ECE9D8"),
             SectionBackground = ColorTranslator.FromHtml("#F0EFE7"),
             TextColor = ColorTranslator.FromHtml("#000000"),
+            GrayTextColor = SystemColors.GrayText,
             TitleBarColor = ColorTranslator.FromHtml("#004E98"),
             TitleBarTextColor = Color.White,
             SubtitleTextColor = Color.FromArgb(180, 210, 240),
@@ -54,6 +56,7 @@ namespace ResolutionSwitcher.Main
             FormBackground = ColorTranslator.FromHtml("#1E1E2E"),
             SectionBackground = ColorTranslator.FromHtml("#2A2A3E"),
             TextColor = ColorTranslator.FromHtml("#E0E0E0"),
+            GrayTextColor = Color.FromArgb(180, 180, 190),
             TitleBarColor = ColorTranslator.FromHtml("#0A2A5E"),
             TitleBarTextColor = Color.White,
             SubtitleTextColor = Color.FromArgb(162, 190, 232),
@@ -134,6 +137,7 @@ namespace ResolutionSwitcher.Main
             }
             catch
             {
+                // Ignore theme load errors and fall back to the default light theme.
             }
 
             return AppTheme.Light;
@@ -147,6 +151,7 @@ namespace ResolutionSwitcher.Main
             }
             catch
             {
+                // Ignore theme save errors so UI interaction continues even if the app folder is not writable.
             }
         }
     }

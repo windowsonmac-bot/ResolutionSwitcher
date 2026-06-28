@@ -618,7 +618,7 @@ namespace ResolutionSwitcher.Main
             _statusHeaderLabel.ForeColor = theme.StatusHeaderColor;
             _statusRichTextBox.BackColor = theme.StatusBackground;
             _statusRichTextBox.ForeColor = theme.TextColor;
-            _monitorDefaultLabel.ForeColor = ThemeManager.CurrentTheme == AppTheme.Dark ? Color.FromArgb(180, 180, 190) : SystemColors.GrayText;
+            _monitorDefaultLabel.ForeColor = theme.GrayTextColor;
 
             ThemeManager.ApplyButtonStyle(_themeToggleButton);
             ThemeManager.ApplyButtonStyle(_aboutButton);
