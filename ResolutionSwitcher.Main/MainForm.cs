@@ -11,11 +11,23 @@ namespace ResolutionSwitcher.Main
         private ConfigManager _configManager;
         private List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
+        private Button _settingsBtn;
+        private Button _aboutBtn;
 
         public MainForm()
         {
             SetupUI();
             InitializeApplication();
+            this.Resize += MainForm_Resize;
+        }
+
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            // Reposition buttons when window resizes
+            if (_settingsBtn != null)
+                _settingsBtn.Left = this.Width - 150;
+            if (_aboutBtn != null)
+                _aboutBtn.Left = this.Width - 70;
         }
 
         private void SetupUI()
@@ -42,20 +54,21 @@ namespace ResolutionSwitcher.Main
                 BackColor = Color.FromArgb(240, 240, 240)
             };
 
-            var settingsBtn = new Button
+            _settingsBtn = new Button
             {
                 Text = "⚙️",
                 Width = 50,
                 Height = 40,
-                Left = this.Width - 130,
+                Left = this.Width - 150,
                 Top = 10,
                 Font = new Font("Arial", 18),
                 BackColor = Color.FromArgb(192, 192, 192),
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
-            settingsBtn.Click += SettingsBtn_Click;
+            _settingsBtn.Click += SettingsBtn_Click;
 
-            var aboutBtn = new Button
+            _aboutBtn = new Button
             {
                 Text = "?",
                 Width = 50,
@@ -64,12 +77,13 @@ namespace ResolutionSwitcher.Main
                 Top = 10,
                 Font = new Font("Arial", 16),
                 BackColor = Color.FromArgb(192, 192, 192),
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
-            aboutBtn.Click += AboutBtn_Click;
+            _aboutBtn.Click += AboutBtn_Click;
 
-            titlePanel.Controls.Add(settingsBtn);
-            titlePanel.Controls.Add(aboutBtn);
+            titlePanel.Controls.Add(_settingsBtn);
+            titlePanel.Controls.Add(_aboutBtn);
             this.Controls.Add(titlePanel);
 
             // Scrollable content panel
