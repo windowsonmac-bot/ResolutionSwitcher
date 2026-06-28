@@ -10,6 +10,8 @@ namespace ResolutionSwitcher.Main
     {
         private const float LabelColumnWidth = 90f;
         private const string PresetSeparatorPrefix = "────";
+        private const int DefaultPresetIndex = 3;
+        private const string DefaultRefreshHz = "240";
         private ConfigManager? _configManager;
         private readonly List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
@@ -369,7 +371,7 @@ namespace ResolutionSwitcher.Main
             };
             _presetDropdown.Items.AddRange(new object[]
             {
-                "──────── 16:9 ────────",
+                $"{PresetSeparatorPrefix}──── 16:9 {PresetSeparatorPrefix}────",
                 "16:9  3840x2160  (2160p / 4K)",
                 "16:9  2560x1440  (1440p)",
                 "16:9  1920x1080  (1080p)",
@@ -379,7 +381,7 @@ namespace ResolutionSwitcher.Main
                 "16:9  1024x576   (576p)",
                 "16:9  800x450    (450p)",
                 "16:9  640x360    (360p)",
-                "──────── 16:10 ───────",
+                $"{PresetSeparatorPrefix}──── 16:10 {PresetSeparatorPrefix}───",
                 "16:10  3840x2400  (2400p)",
                 "16:10  2560x1600  (1600p)",
                 "16:10  1920x1200  (1200p)",
@@ -389,7 +391,7 @@ namespace ResolutionSwitcher.Main
                 "16:10  1024x640   (640p)",
                 "16:10  800x500    (500p)",
                 "16:10  640x400    (400p)",
-                "──────── 4:3 ─────────",
+                $"{PresetSeparatorPrefix}──── 4:3 {PresetSeparatorPrefix}─────",
                 "4:3  2880x2160  (2160p)",
                 "4:3  1920x1440  (1440p)",
                 "4:3  1600x1200  (1200p)",
@@ -401,7 +403,7 @@ namespace ResolutionSwitcher.Main
                 "4:3  960x720    (720p)",
                 "4:3  800x600    (600p)",
                 "4:3  640x480    (480p)",
-                "──────── 5:4 ─────────",
+                $"{PresetSeparatorPrefix}──── 5:4 {PresetSeparatorPrefix}─────",
                 "5:4  2700x2160  (2160p)",
                 "5:4  1800x1440  (1440p)",
                 "5:4  1500x1200  (1200p)",
@@ -448,8 +450,8 @@ namespace ResolutionSwitcher.Main
             resLayout.Controls.Add(customFlow, 1, 2);
             resLayout.ResumeLayout(false);
             resGroup.Controls.Add(resLayout);
-            _hzDropdown.SelectedItem = "240";
-            _presetDropdown.SelectedIndex = 3;
+            _hzDropdown.SelectedItem = DefaultRefreshHz;
+            _presetDropdown.SelectedIndex = DefaultPresetIndex;
             _presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
             SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
@@ -742,7 +744,7 @@ namespace ResolutionSwitcher.Main
             }
 
             var resolutionToken = selectedItem
-                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .FirstOrDefault(token => token.Contains('x'));
 
             if (string.IsNullOrWhiteSpace(resolutionToken))
