@@ -171,7 +171,7 @@ namespace ResolutionSwitcher.Main
             {
                 Dock = DockStyle.Bottom,
                 Height = 88,
-                MinimumSize = new Size(0, 96),
+                MinimumSize = new Size(0, 88),
                 BorderStyle = BorderStyle.Fixed3D,
                 Padding = new Padding(8, 6, 8, 8)
             };
