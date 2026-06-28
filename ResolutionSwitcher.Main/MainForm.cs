@@ -38,6 +38,8 @@ namespace ResolutionSwitcher.Main
         private ComboBox _profileDropdown = null!;
         private ComboBox _presetDropdown = null!;
         private ComboBox _hzDropdown = null!;
+        private TextBox _customHzInput = null!;
+        private Label _customHzLabel = null!;
         private TextBox _widthInput = null!;
         private TextBox _heightInput = null!;
 
@@ -55,14 +57,14 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(820, 820);
-            MinimumSize = new Size(620, 620);
+            ClientSize = new Size(780, 820);
+            MinimumSize = new Size(600, 640);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
             MinimizeBox = true;
-            AutoScaleMode = AutoScaleMode.Dpi;
-            AutoScaleDimensions = new SizeF(96F, 96F);
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleDimensions = new SizeF(6F, 13F);
             Font = new Font("Tahoma", 8f);
 
             _titlePanel = new Panel
@@ -107,8 +109,8 @@ namespace ResolutionSwitcher.Main
             _lightThemeButton = new Button
             {
                 Text = "☀ Light",
-                Width = 58,
-                Height = 24,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(3, 0, 0, 0)
             };
@@ -117,8 +119,8 @@ namespace ResolutionSwitcher.Main
             _darkThemeButton = new Button
             {
                 Text = "🌙 Dark",
-                Width = 54,
-                Height = 24,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(3, 0, 0, 0)
             };
@@ -127,8 +129,8 @@ namespace ResolutionSwitcher.Main
             _aboutButton = new Button
             {
                 Text = "About",
-                Width = 54,
-                Height = 24,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(3, 0, 0, 0)
             };
@@ -137,8 +139,8 @@ namespace ResolutionSwitcher.Main
             _settingsButton = new Button
             {
                 Text = "Settings",
-                Width = 64,
-                Height = 24,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(3, 0, 0, 0)
             };
@@ -147,8 +149,8 @@ namespace ResolutionSwitcher.Main
             _debugButton = new Button
             {
                 Text = "Debug",
-                Width = 54,
-                Height = 24,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(3, 0, 0, 0)
             };
@@ -157,8 +159,8 @@ namespace ResolutionSwitcher.Main
             _masterResetButton = new Button
             {
                 Text = "Reset",
-                Width = 54,
-                Height = 24,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(3, 0, 0, 0)
             };
@@ -420,11 +422,41 @@ namespace ResolutionSwitcher.Main
             {
                 Name = "hzDropdown",
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Dock = DockStyle.Fill,
+                Width = 100,
                 Font = new Font("Tahoma", 8f),
+                Margin = new Padding(0, 2, 4, 2)
+            };
+            _hzDropdown.Items.AddRange(new object[] { "24", "25", "29", "30", "48", "50", "60", "72", "75", "85", "90", "100", "120", "144", "165", "180", "200", "240", "280", "300", "360", "480", "500", "1000", "Custom..." });
+
+            _customHzInput = new TextBox
+            {
+                Width = 60,
+                Font = new Font("Tahoma", 8f),
+                Text = "",
+                Visible = false,
+                Margin = new Padding(0, 3, 2, 3)
+            };
+
+            _customHzLabel = new Label
+            {
+                Text = "Hz",
+                AutoSize = true,
+                Font = new Font("Tahoma", 8f),
+                Visible = false,
+                Margin = new Padding(2, 5, 0, 0)
+            };
+
+            var hzPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Dock = DockStyle.Fill,
                 Margin = new Padding(0, 2, 0, 2)
             };
-            _hzDropdown.Items.AddRange(new object[] { "60", "75", "120", "144", "165", "240", "360", "Custom..." });
+            hzPanel.Controls.Add(_hzDropdown);
+            hzPanel.Controls.Add(_customHzInput);
+            hzPanel.Controls.Add(_customHzLabel);
 
             var customFlow = new FlowLayoutPanel
             {
@@ -434,8 +466,8 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0, 2, 0, 2)
             };
-            _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
-            _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
+            _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
+            _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
 
             customFlow.Controls.Add(new Label { Text = "W:", Width = 20, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f) });
             customFlow.Controls.Add(_widthInput);
@@ -445,7 +477,7 @@ namespace ResolutionSwitcher.Main
             resLayout.Controls.Add(MakeLabel("Preset:"), 0, 0);
             resLayout.Controls.Add(_presetDropdown, 1, 0);
             resLayout.Controls.Add(MakeLabel("Refresh Hz:"), 0, 1);
-            resLayout.Controls.Add(_hzDropdown, 1, 1);
+            resLayout.Controls.Add(hzPanel, 1, 1);
             resLayout.Controls.Add(MakeLabel("Custom:"), 0, 2);
             resLayout.Controls.Add(customFlow, 1, 2);
             resLayout.ResumeLayout(false);
@@ -453,10 +485,11 @@ namespace ResolutionSwitcher.Main
             _hzDropdown.SelectedItem = DefaultRefreshHz;
             _presetDropdown.SelectedIndex = DefaultPresetIndex;
             _presetDropdown.SelectedIndexChanged += PresetDropdown_SelectedIndexChanged;
+            _hzDropdown.SelectedIndexChanged += HzDropdown_SelectedIndexChanged;
             SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
             var gameGroup = MakeGroup("Game");
-            var gameLayout = MakeTwoColLayout(2);
+            var gameLayout = MakeTwoColLayout(3);
             gameLayout.SuspendLayout();
 
             var gameDropdown = new ComboBox
@@ -499,6 +532,41 @@ namespace ResolutionSwitcher.Main
             gameLayout.Controls.Add(gameFlow, 1, 0);
             gameLayout.Controls.Add(MakeLabel("Launcher:"), 0, 1);
             gameLayout.Controls.Add(launchMethodDropdown, 1, 1);
+
+            var scanSteamBtn = new Button
+            {
+                Text = "Scan Steam Library",
+                AutoSize = true,
+                Padding = new Padding(6, 3, 6, 3),
+                Font = new Font("Tahoma", 8f)
+            };
+            scanSteamBtn.Click += (_, _) => MessageBox.Show(
+                "Steam library scanning will be available in the next update.",
+                "Coming Soon",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            var steamComingLabel = new Label
+            {
+                Text = "  (coming in next update)",
+                AutoSize = true,
+                Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            var steamBtnFlow = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 2)
+            };
+            steamBtnFlow.Controls.Add(scanSteamBtn);
+            steamBtnFlow.Controls.Add(steamComingLabel);
+
+            gameLayout.Controls.Add(MakeLabel("Steam:"), 0, 2);
+            gameLayout.Controls.Add(steamBtnFlow, 1, 2);
             gameLayout.ResumeLayout(false);
             gameGroup.Controls.Add(gameLayout);
 
@@ -760,6 +828,13 @@ namespace ResolutionSwitcher.Main
 
             _widthInput.Text = parts[0];
             _heightInput.Text = parts[1];
+        }
+
+        private void HzDropdown_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            var isCustom = _hzDropdown.SelectedItem as string == "Custom...";
+            _customHzInput.Visible = isCustom;
+            _customHzLabel.Visible = isCustom;
         }
 
         private void ThemeManager_ThemeChanged(object? sender, EventArgs e)

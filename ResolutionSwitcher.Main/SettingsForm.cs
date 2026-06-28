@@ -45,7 +45,8 @@ namespace ResolutionSwitcher.Main
             MinimumSize = new Size(700, 600);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.Sizable;
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleDimensions = new SizeF(6F, 13F);
             Font = new Font("Tahoma", 8f);
 
             _titlePanel = new Panel
@@ -88,14 +89,13 @@ namespace ResolutionSwitcher.Main
             var tab = new TabPage("General");
             var layout = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 AutoSize = true,
                 ColumnCount = 1,
                 Padding = new Padding(10),
-                RowCount = 4
+                RowCount = 3
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -105,9 +105,10 @@ namespace ResolutionSwitcher.Main
                 Text = "Startup",
                 Dock = DockStyle.Top,
                 AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Margin = new Padding(0, 0, 0, 8),
-                Padding = new Padding(8, 10, 8, 8)
+                Margin = new Padding(0, 0, 0, 10),
+                Padding = new Padding(8, 12, 8, 10)
             };
 
             var startupLayout = new TableLayoutPanel
@@ -145,9 +146,10 @@ namespace ResolutionSwitcher.Main
                 Text = "Default Launch Mode",
                 Dock = DockStyle.Top,
                 AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Margin = new Padding(0, 0, 0, 8),
-                Padding = new Padding(8, 10, 8, 8)
+                Margin = new Padding(0, 0, 0, 10),
+                Padding = new Padding(8, 12, 8, 10)
             };
 
             var launchModeLayout = new TableLayoutPanel
@@ -183,9 +185,10 @@ namespace ResolutionSwitcher.Main
                 Text = "Theme",
                 Dock = DockStyle.Top,
                 AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Margin = new Padding(0, 0, 0, 8),
-                Padding = new Padding(8, 10, 8, 8)
+                Margin = new Padding(0, 0, 0, 10),
+                Padding = new Padding(8, 12, 8, 10)
             };
 
             var themeFlow = new FlowLayoutPanel
@@ -228,61 +231,9 @@ namespace ResolutionSwitcher.Main
             themeFlow.Controls.Add(_darkModeRadio);
             themeGroup.Controls.Add(themeFlow);
 
-            var steamGroup = new GroupBox
-            {
-                Text = "Steam Library",
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Padding = new Padding(8, 10, 8, 8)
-            };
-
-            var steamFlow = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                ColumnCount = 2,
-                RowCount = 1,
-                Padding = new Padding(0, 6, 0, 6)
-            };
-            steamFlow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            steamFlow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            steamFlow.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-            var scanSteamButton = new Button
-            {
-                Text = "Scan Steam Library",
-                Width = 140,
-                Height = 26,
-                Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Margin = new Padding(0, 2, 0, 2)
-            };
-            scanSteamButton.Click += (_, _) => MessageBox.Show(
-                "Steam library scanning will be available in the next update.",
-                "Coming Soon",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-
-            var steamHintLabel = new Label
-            {
-                Text = "Click to scan and import your Steam games",
-                AutoSize = false,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft,
-                Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
-                Margin = new Padding(10, 0, 0, 0)
-            };
-
-            steamFlow.Controls.Add(scanSteamButton, 0, 0);
-            steamFlow.Controls.Add(steamHintLabel, 1, 0);
-            steamGroup.Controls.Add(steamFlow);
-
             layout.Controls.Add(startupGroup, 0, 0);
             layout.Controls.Add(launchModeGroup, 0, 1);
             layout.Controls.Add(themeGroup, 0, 2);
-            layout.Controls.Add(steamGroup, 0, 3);
             tab.Controls.Add(layout);
             return tab;
         }
@@ -328,9 +279,9 @@ namespace ResolutionSwitcher.Main
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Margin = new Padding(0, 0, 0, 8)
             };
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240f));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160f));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 62f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
             AddHotkeyRow(table, 0, "Reset Resolution", "Ctrl + Alt + R", "_resetHotkeyBox");
             AddHotkeyRow(table, 1, "Apply & Launch Last Profile", "Ctrl + Alt + L", "_launchHotkeyBox");
@@ -376,15 +327,15 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 9f),
                 ReadOnly = false,
-                Margin = new Padding(0, 4, 0, 4)
+                Margin = new Padding(0, 3, 0, 3)
             };
             _hotkeyDefaults[textBox] = defaultValue;
 
             var resetButton = new Button
             {
                 Text = "Reset",
-                Width = 52,
-                Height = 23,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(0, 3, 0, 3)
             };
