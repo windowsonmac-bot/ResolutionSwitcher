@@ -1,136 +1,209 @@
 using System;
-using System.Windows.Forms;
 using System.Collections.Generic;
-using System.Linq;
 using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace ResolutionSwitcher.Main
 {
     public class MainForm : Form
     {
-        private ConfigManager _configManager;
-        private List<DisplayManager.MonitorInfo> _detectedMonitors;
+        private ConfigManager? _configManager;
+        private readonly List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
-        private Panel _titlePanel;
-
-        private ComboBox _monitorDropdown;
-        private Label _monitorDefaultLabel;
-        private ComboBox _profileDropdown;
-        private StatusStrip _statusStrip;
-        private ToolStripStatusLabel _statusLabel;
+        private Panel _titlePanel = null!;
+        private Panel _scrollPanel = null!;
+        private Panel _statusPanel = null!;
+        private Label _titleLabel = null!;
+        private Label _subtitleLabel = null!;
+        private Label _statusHeaderLabel = null!;
+        private RichTextBox _statusRichTextBox = null!;
+        private Button _settingsButton = null!;
+        private Button _aboutButton = null!;
+        private Button _themeToggleButton = null!;
+        private Button _statusClearButton = null!;
+        private ComboBox _monitorDropdown = null!;
+        private Label _monitorDefaultLabel = null!;
+        private ComboBox _profileDropdown = null!;
 
         public MainForm()
         {
-            _configManager = null;
             _detectedMonitors = new List<DisplayManager.MonitorInfo>();
             SetupUI();
+            ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
+            ApplyTheme();
             InitializeApplication();
         }
 
         private void SetupUI()
         {
-            this.SuspendLayout();
+            SuspendLayout();
 
-            // ── Form properties ──────────────────────────────────────────
-            this.Text = "ResolutionSwitcher v1.0";
-            this.ClientSize = new Size(780, 560);
-            this.MinimumSize = new Size(620, 480);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.FormBorderStyle = FormBorderStyle.Sizable;
-            this.MaximizeBox = true;
-            this.MinimizeBox = true;
-            this.AutoScaleMode = AutoScaleMode.Dpi;
-            this.AutoScaleDimensions = new SizeF(96F, 96F);
-            this.Font = new Font("Tahoma", 8f);
+            Text = "ResolutionSwitcher v1.0";
+            ClientSize = new Size(780, 560);
+            MinimumSize = new Size(480, 400);
+            StartPosition = FormStartPosition.CenterScreen;
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MaximizeBox = true;
+            MinimizeBox = true;
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleDimensions = new SizeF(96F, 96F);
+            Font = new Font("Tahoma", 8f);
 
-            // ── Title banner (CPU-Z style teal/navy header) ───────────────
-            var titlePanel = new Panel
+            _titlePanel = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 38,
-                BackColor = Color.FromArgb(0, 78, 152),
                 Padding = new Padding(8, 0, 4, 0)
             };
-            titlePanel.SuspendLayout();
+            _titlePanel.SuspendLayout();
 
-            var titleLabel = new Label
+            _titleLabel = new Label
             {
                 Text = "ResolutionSwitcher",
                 Dock = DockStyle.Fill,
-                ForeColor = Color.White,
                 Font = new Font("Tahoma", 12f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent
             };
-            var subtitleLabel = new Label
+
+            _subtitleLabel = new Label
             {
                 Text = "Display Resolution Manager",
                 Dock = DockStyle.Right,
-                ForeColor = Color.FromArgb(180, 210, 240),
+                AutoSize = false,
+                Width = 170,
                 Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
                 TextAlign = ContentAlignment.MiddleRight,
-                AutoSize = false,
-                Width = 200,
                 BackColor = Color.Transparent
             };
-            var settingsBtn = new Button
+
+            var buttonStrip = new FlowLayoutPanel
             {
-                Text = "Settings",
                 Dock = DockStyle.Right,
-                Width = 64,
-                FlatStyle = FlatStyle.System,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Padding = new Padding(0, 6, 0, 0),
+                Margin = new Padding(0),
+                BackColor = Color.Transparent
+            };
+
+            _themeToggleButton = new Button
+            {
+                Text = "Light / Dark",
+                Width = 78,
+                Height = 23,
                 Font = new Font("Tahoma", 7.5f)
             };
-            settingsBtn.Click += SettingsBtn_Click;
-            var aboutBtn = new Button
+            _themeToggleButton.Click += ThemeToggleButton_Click;
+
+            _aboutButton = new Button
             {
                 Text = "About",
-                Dock = DockStyle.Right,
                 Width = 54,
-                FlatStyle = FlatStyle.System,
+                Height = 23,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 0, 0, 0)
+            };
+            _aboutButton.Click += AboutBtn_Click;
+
+            _settingsButton = new Button
+            {
+                Text = "Settings",
+                Width = 64,
+                Height = 23,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 0, 0, 0)
+            };
+            _settingsButton.Click += SettingsBtn_Click;
+
+            buttonStrip.Controls.Add(_themeToggleButton);
+            buttonStrip.Controls.Add(_aboutButton);
+            buttonStrip.Controls.Add(_settingsButton);
+
+            _titlePanel.Controls.Add(_subtitleLabel);
+            _titlePanel.Controls.Add(buttonStrip);
+            _titlePanel.Controls.Add(_titleLabel);
+            _titlePanel.ResumeLayout(false);
+
+            _statusPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 104,
+                MinimumSize = new Size(0, 80),
+                BorderStyle = BorderStyle.Fixed3D,
+                Padding = new Padding(8, 6, 8, 8)
+            };
+
+            var statusHeaderPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 22,
+                BackColor = Color.Transparent
+            };
+
+            _statusHeaderLabel = new Label
+            {
+                Text = "STATUS",
+                Dock = DockStyle.Left,
+                Width = 72,
+                Font = new Font("Tahoma", 7.5f, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                BackColor = Color.Transparent
+            };
+
+            _statusClearButton = new Button
+            {
+                Text = "Clear",
+                Dock = DockStyle.Right,
+                Width = 48,
+                Height = 20,
                 Font = new Font("Tahoma", 7.5f)
             };
-            aboutBtn.Click += AboutBtn_Click;
+            _statusClearButton.Click += (s, e) => _statusRichTextBox.Clear();
 
-            // Add right-docked controls first (they stack right-to-left)
-            titlePanel.Controls.Add(subtitleLabel);
-            titlePanel.Controls.Add(settingsBtn);
-            titlePanel.Controls.Add(aboutBtn);
-            titlePanel.Controls.Add(titleLabel);  // Fill goes last
-            titlePanel.ResumeLayout(false);
-            _titlePanel = titlePanel;
+            var headerSpacer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(8, 9, 0, 0),
+                BackColor = Color.Transparent
+            };
+            var headerLine = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 1
+            };
+            headerSpacer.Controls.Add(headerLine);
 
-            // ── Status strip (authentic XP utility bottom bar) ────────────
-            _statusStrip = new StatusStrip
-            {
-                SizingGrip = true,
-                Font = new Font("Tahoma", 7.5f)
-            };
-            _statusLabel = new ToolStripStatusLabel
-            {
-                Text = "Ready.",
-                Spring = true,
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            var versionLabel = new ToolStripStatusLabel
-            {
-                Text = "v1.0.0",
-                TextAlign = ContentAlignment.MiddleRight
-            };
-            _statusStrip.Items.Add(_statusLabel);
-            _statusStrip.Items.Add(new ToolStripSeparator());
-            _statusStrip.Items.Add(versionLabel);
+            statusHeaderPanel.Controls.Add(headerSpacer);
+            statusHeaderPanel.Controls.Add(_statusClearButton);
+            statusHeaderPanel.Controls.Add(_statusHeaderLabel);
 
-            // ── Scroll container ──────────────────────────────────────────
-            var scrollPanel = new Panel
+            _statusRichTextBox = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Courier New", 8.5f),
+                ScrollBars = RichTextBoxScrollBars.Vertical,
+                DetectUrls = false,
+                WordWrap = false,
+                TabStop = false,
+                ShortcutsEnabled = true
+            };
+
+            _statusPanel.Controls.Add(_statusRichTextBox);
+            _statusPanel.Controls.Add(statusHeaderPanel);
+
+            _scrollPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
                 Padding = new Padding(8, 6, 8, 4)
             };
-            scrollPanel.SuspendLayout();
+            _scrollPanel.SuspendLayout();
 
-            // ── Main vertical layout ──────────────────────────────────────
             var mainLayout = new TableLayoutPanel
             {
                 ColumnCount = 1,
@@ -144,13 +217,11 @@ namespace ResolutionSwitcher.Main
             mainLayout.SuspendLayout();
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-            // Add 6 rows
             for (int i = 0; i < 6; i++)
+            {
                 mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            }
 
-            // ═════════════════════════════════════════════════════════════
-            // PROFILE section
-            // ═════════════════════════════════════════════════════════════
             var profileGroup = MakeGroup("Profile");
             var profileLayout = MakeTwoColLayout(1);
             profileLayout.SuspendLayout();
@@ -165,8 +236,8 @@ namespace ResolutionSwitcher.Main
             _profileDropdown.Items.AddRange(new object[] { "Gaming", "Streaming", "Productivity" });
             _profileDropdown.SelectedIndex = 0;
 
-            var newProfileBtn = new Button { Text = "+ New", Width = 58, Height = 23, FlatStyle = FlatStyle.System, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
-            var deleteProfileBtn = new Button { Text = "Delete", Width = 58, Height = 23, FlatStyle = FlatStyle.System, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
+            var newProfileBtn = new Button { Text = "+ New", Width = 58, Height = 23, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
+            var deleteProfileBtn = new Button { Text = "Delete", Width = 58, Height = 23, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
 
             var profileFlow = new FlowLayoutPanel
             {
@@ -185,9 +256,6 @@ namespace ResolutionSwitcher.Main
             profileLayout.ResumeLayout(false);
             profileGroup.Controls.Add(profileLayout);
 
-            // ═════════════════════════════════════════════════════════════
-            // MONITOR section
-            // ═════════════════════════════════════════════════════════════
             var monitorGroup = MakeGroup("Monitor");
             var monitorLayout = MakeTwoColLayout(2);
             monitorLayout.SuspendLayout();
@@ -203,7 +271,6 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Detecting monitors...",
                 Dock = DockStyle.Fill,
-                ForeColor = SystemColors.GrayText,
                 Font = new Font("Tahoma", 7.5f),
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = new Padding(0, 1, 0, 3)
@@ -211,14 +278,11 @@ namespace ResolutionSwitcher.Main
 
             monitorLayout.Controls.Add(MakeLabel("Monitor:"), 0, 0);
             monitorLayout.Controls.Add(_monitorDropdown, 1, 0);
-            monitorLayout.Controls.Add(MakeLabel(""), 0, 1);
+            monitorLayout.Controls.Add(MakeLabel(string.Empty), 0, 1);
             monitorLayout.Controls.Add(_monitorDefaultLabel, 1, 1);
             monitorLayout.ResumeLayout(false);
             monitorGroup.Controls.Add(monitorLayout);
 
-            // ═════════════════════════════════════════════════════════════
-            // RESOLUTION section
-            // ═════════════════════════════════════════════════════════════
             var resGroup = MakeGroup("Resolution");
             var resLayout = MakeTwoColLayout(2);
             resLayout.SuspendLayout();
@@ -231,7 +295,6 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Margin = new Padding(0, 2, 0, 2)
             };
-            // 16:9
             presetDropdown.Items.Add("16:9  3840x2160  (2160p / 4K)");
             presetDropdown.Items.Add("16:9  2560x1440  (1440p)");
             presetDropdown.Items.Add("16:9  1920x1080  (1080p)");
@@ -241,7 +304,6 @@ namespace ResolutionSwitcher.Main
             presetDropdown.Items.Add("16:9  1024x576   (576p)");
             presetDropdown.Items.Add("16:9  800x450    (450p)");
             presetDropdown.Items.Add("16:9  640x360    (360p)");
-            // 16:10
             presetDropdown.Items.Add("16:10  3840x2400  (2400p)");
             presetDropdown.Items.Add("16:10  2560x1600  (1600p)");
             presetDropdown.Items.Add("16:10  1920x1200  (1200p)");
@@ -251,7 +313,6 @@ namespace ResolutionSwitcher.Main
             presetDropdown.Items.Add("16:10  1024x640   (640p)");
             presetDropdown.Items.Add("16:10  800x500    (500p)");
             presetDropdown.Items.Add("16:10  640x400    (400p)");
-            // 4:3
             presetDropdown.Items.Add("4:3  2880x2160  (2160p)");
             presetDropdown.Items.Add("4:3  1920x1440  (1440p)");
             presetDropdown.Items.Add("4:3  1600x1200  (1200p)");
@@ -263,7 +324,6 @@ namespace ResolutionSwitcher.Main
             presetDropdown.Items.Add("4:3  960x720    (720p)");
             presetDropdown.Items.Add("4:3  800x600    (600p)");
             presetDropdown.Items.Add("4:3  640x480    (480p)");
-            // 5:4
             presetDropdown.Items.Add("5:4  2700x2160  (2160p)");
             presetDropdown.Items.Add("5:4  1800x1440  (1440p)");
             presetDropdown.Items.Add("5:4  1500x1200  (1200p)");
@@ -277,7 +337,6 @@ namespace ResolutionSwitcher.Main
             presetDropdown.Items.Add("5:4  600x480    (480p)");
             presetDropdown.SelectedIndex = 0;
 
-            // Custom resolution row
             var customFlow = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.LeftToRight,
@@ -304,9 +363,6 @@ namespace ResolutionSwitcher.Main
             resLayout.ResumeLayout(false);
             resGroup.Controls.Add(resLayout);
 
-            // ═════════════════════════════════════════════════════════════
-            // GAME section
-            // ═════════════════════════════════════════════════════════════
             var gameGroup = MakeGroup("Game");
             var gameLayout = MakeTwoColLayout(2);
             gameLayout.SuspendLayout();
@@ -322,7 +378,7 @@ namespace ResolutionSwitcher.Main
             gameDropdown.Items.AddRange(new object[] { "Counter-Strike 2", "Valorant", "Other" });
             gameDropdown.SelectedIndex = 0;
 
-            var addGameBtn = new Button { Text = "Add...", Width = 58, Height = 23, FlatStyle = FlatStyle.System, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
+            var addGameBtn = new Button { Text = "Add...", Width = 58, Height = 23, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
             addGameBtn.Click += BrowseGameBtn_Click;
 
             var gameFlow = new FlowLayoutPanel
@@ -354,14 +410,10 @@ namespace ResolutionSwitcher.Main
             gameLayout.ResumeLayout(false);
             gameGroup.Controls.Add(gameLayout);
 
-            // ═════════════════════════════════════════════════════════════
-            // LAUNCH MODE section
-            // ═════════════════════════════════════════════════════════════
             var launchGroup = MakeGroup("Launch Mode");
             var launchLayout = MakeTwoColLayout(1);
             launchLayout.SuspendLayout();
 
-            // Reconfigure as single-column for the radio rows
             launchLayout.ColumnStyles.Clear();
             launchLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             launchLayout.ColumnCount = 1;
@@ -422,9 +474,6 @@ namespace ResolutionSwitcher.Main
             launchLayout.ResumeLayout(false);
             launchGroup.Controls.Add(launchLayout);
 
-            // ═════════════════════════════════════════════════════════════
-            // ACTIONS section
-            // ═════════════════════════════════════════════════════════════
             var actionGroup = MakeGroup("Actions");
             var actionBtnLayout = new TableLayoutPanel
             {
@@ -446,7 +495,6 @@ namespace ResolutionSwitcher.Main
                 Text = "Apply and Launch Game",
                 Dock = DockStyle.Fill,
                 Height = 36,
-                FlatStyle = FlatStyle.System,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 Margin = new Padding(2, 0, 2, 0)
             };
@@ -457,7 +505,6 @@ namespace ResolutionSwitcher.Main
                 Text = "Apply Only",
                 Dock = DockStyle.Fill,
                 Height = 36,
-                FlatStyle = FlatStyle.System,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 Margin = new Padding(2, 0, 2, 0)
             };
@@ -468,7 +515,6 @@ namespace ResolutionSwitcher.Main
                 Text = "Reset Resolution",
                 Dock = DockStyle.Fill,
                 Height = 36,
-                FlatStyle = FlatStyle.System,
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 Margin = new Padding(2, 0, 2, 0)
             };
@@ -479,9 +525,6 @@ namespace ResolutionSwitcher.Main
             actionBtnLayout.Controls.Add(resetBtn, 2, 0);
             actionGroup.Controls.Add(actionBtnLayout);
 
-            // ═════════════════════════════════════════════════════════════
-            // Assemble mainLayout rows
-            // ═════════════════════════════════════════════════════════════
             mainLayout.Controls.Add(profileGroup, 0, 0);
             mainLayout.Controls.Add(monitorGroup, 0, 1);
             mainLayout.Controls.Add(resGroup, 0, 2);
@@ -490,16 +533,21 @@ namespace ResolutionSwitcher.Main
             mainLayout.Controls.Add(actionGroup, 0, 5);
 
             mainLayout.ResumeLayout(false);
-            scrollPanel.Controls.Add(mainLayout);
-            scrollPanel.ResumeLayout(false);
+            _scrollPanel.Controls.Add(mainLayout);
+            _scrollPanel.ResumeLayout(false);
 
-            // ── Wire form together (order matters for DockStyle) ──────────
-            this.Controls.Add(scrollPanel);      // Fill
-            this.Controls.Add(_statusStrip);     // Bottom
-            this.Controls.Add(_titlePanel);      // Top
+            Controls.Add(_scrollPanel);
+            Controls.Add(_statusPanel);
+            Controls.Add(_titlePanel);
 
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+            base.OnFormClosed(e);
         }
 
         private GroupBox MakeGroup(string title)
@@ -529,10 +577,12 @@ namespace ResolutionSwitcher.Main
                 Padding = new Padding(0),
                 Margin = new Padding(0)
             };
-            tl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 72f));
+            tl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
             tl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             for (int i = 0; i < rows; i++)
+            {
                 tl.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            }
             return tl;
         }
 
@@ -544,10 +594,124 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                ForeColor = SystemColors.ControlText,
                 Margin = new Padding(0, 3, 6, 3),
                 AutoSize = false
             };
+        }
+
+        private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
+        {
+            ApplyTheme();
+        }
+
+        private void ApplyTheme()
+        {
+            var theme = ThemeManager.Palette;
+
+            BackColor = theme.FormBackground;
+            ForeColor = theme.TextColor;
+            _scrollPanel.BackColor = theme.FormBackground;
+            _titlePanel.BackColor = theme.TitleBarColor;
+            _titleLabel.ForeColor = theme.TitleBarTextColor;
+            _subtitleLabel.ForeColor = theme.SubtitleTextColor;
+            _statusPanel.BackColor = theme.StatusBackground;
+            _statusHeaderLabel.ForeColor = theme.StatusHeaderColor;
+            _statusRichTextBox.BackColor = theme.StatusBackground;
+            _statusRichTextBox.ForeColor = theme.TextColor;
+            _monitorDefaultLabel.ForeColor = ThemeManager.CurrentTheme == AppTheme.Dark ? Color.FromArgb(180, 180, 190) : SystemColors.GrayText;
+
+            ThemeManager.ApplyButtonStyle(_themeToggleButton);
+            ThemeManager.ApplyButtonStyle(_aboutButton);
+            ThemeManager.ApplyButtonStyle(_settingsButton);
+            ThemeManager.ApplyButtonStyle(_statusClearButton);
+
+            ApplyThemeToControls(_scrollPanel, false);
+            Invalidate(true);
+        }
+
+        private void ApplyThemeToControls(Control parent, bool insideGroupBox)
+        {
+            var theme = ThemeManager.Palette;
+
+            foreach (Control child in parent.Controls)
+            {
+                if (ReferenceEquals(child, _titlePanel) || ReferenceEquals(child, _statusPanel))
+                {
+                    continue;
+                }
+
+                var childInsideGroupBox = insideGroupBox || child is GroupBox || child.Parent is GroupBox;
+
+                if (child is GroupBox groupBox)
+                {
+                    groupBox.ForeColor = theme.TextColor;
+                    if (groupBox.HasChildren)
+                    {
+                        ApplyThemeToControls(groupBox, true);
+                    }
+                    continue;
+                }
+
+                if (child is Panel || child is TableLayoutPanel || child is FlowLayoutPanel)
+                {
+                    child.BackColor = childInsideGroupBox ? theme.SectionBackground : theme.FormBackground;
+                    child.ForeColor = theme.TextColor;
+                }
+                else if (child is Label label)
+                {
+                    label.ForeColor = theme.TextColor;
+                    label.BackColor = childInsideGroupBox ? theme.SectionBackground : theme.FormBackground;
+                }
+                else if (child is LinkLabel linkLabel)
+                {
+                    linkLabel.ForeColor = theme.TextColor;
+                    linkLabel.BackColor = childInsideGroupBox ? theme.SectionBackground : theme.FormBackground;
+                    linkLabel.LinkColor = ThemeManager.CurrentTheme == AppTheme.Dark ? theme.StatusHeaderColor : theme.TitleBarColor;
+                    linkLabel.ActiveLinkColor = ControlPaint.Light(linkLabel.LinkColor);
+                    linkLabel.VisitedLinkColor = linkLabel.LinkColor;
+                }
+                else if (child is RadioButton radioButton)
+                {
+                    radioButton.ForeColor = theme.TextColor;
+                    radioButton.BackColor = theme.SectionBackground;
+                }
+                else if (child is ComboBox comboBox)
+                {
+                    comboBox.BackColor = theme.InputBackground;
+                    comboBox.ForeColor = theme.TextColor;
+                }
+                else if (child is TextBox textBox)
+                {
+                    textBox.BackColor = theme.InputBackground;
+                    textBox.ForeColor = theme.TextColor;
+                }
+                else if (child is RichTextBox richTextBox)
+                {
+                    richTextBox.BackColor = childInsideGroupBox ? theme.SectionBackground : theme.FormBackground;
+                    richTextBox.ForeColor = theme.TextColor;
+                }
+                else if (child is Button button)
+                {
+                    ThemeManager.ApplyButtonStyle(button);
+                }
+
+                if (child.HasChildren)
+                {
+                    ApplyThemeToControls(child, childInsideGroupBox);
+                }
+            }
+        }
+
+        private void AppendStatus(string message)
+        {
+            if (_statusRichTextBox.TextLength > 0)
+            {
+                _statusRichTextBox.AppendText(Environment.NewLine);
+            }
+
+            _statusRichTextBox.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}");
+            _statusRichTextBox.SelectionStart = _statusRichTextBox.TextLength;
+            _statusRichTextBox.ScrollToCaret();
         }
 
         private void InitializeApplication()
@@ -557,10 +721,12 @@ namespace ResolutionSwitcher.Main
                 _logger.LogInfo("Initializing ResolutionSwitcher main application");
 
                 _configManager = new ConfigManager();
-                _detectedMonitors = DisplayManager.GetMonitors();
+                _detectedMonitors.Clear();
+                _detectedMonitors.AddRange(DisplayManager.GetMonitors());
 
                 if (_detectedMonitors.Count == 0)
                 {
+                    AppendStatus("No monitors detected.");
                     MessageBox.Show("No monitors detected!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     _logger.LogError("No monitors detected on startup");
                     return;
@@ -570,41 +736,55 @@ namespace ResolutionSwitcher.Main
 
                 _monitorDropdown.Items.Clear();
                 foreach (var monitor in _detectedMonitors)
+                {
                     _monitorDropdown.Items.Add($"{monitor.FriendlyName} ({monitor.Width}x{monitor.Height}@{monitor.RefreshRate}Hz)");
+                }
+
                 if (_monitorDropdown.Items.Count > 0)
+                {
                     _monitorDropdown.SelectedIndex = 0;
+                }
 
                 var primary = _detectedMonitors.FirstOrDefault(m => m.IsPrimary) ?? _detectedMonitors[0];
                 _monitorDefaultLabel.Text = $"Default: {primary.Width} x {primary.Height} @ {primary.RefreshRate} Hz";
 
+                AppendStatus($"Detected {_detectedMonitors.Count} monitor(s).");
+                AppendStatus("Ready.");
                 _logger.LogSuccess("Main application initialized successfully");
             }
             catch (Exception ex)
             {
+                AppendStatus($"Initialization error: {ex.Message}");
                 _logger.LogError("Error initializing application", ex);
                 MessageBox.Show($"Initialization error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void LaunchGameBtn_Click(object sender, EventArgs e)
+        private void ThemeToggleButton_Click(object? sender, EventArgs e)
+        {
+            ThemeManager.ToggleTheme();
+            AppendStatus($"Theme switched to {ThemeManager.CurrentTheme} mode.");
+        }
+
+        private void LaunchGameBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Apply and Launch Game clicked");
-            _statusLabel.Text = "Launching game...";
+            AppendStatus("Launching game...");
         }
 
-        private void ApplyOnlyBtn_Click(object sender, EventArgs e)
+        private void ApplyOnlyBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Apply Only clicked");
-            _statusLabel.Text = "Applying resolution...";
+            AppendStatus("Applying resolution...");
         }
 
-        private void ResetBtn_Click(object sender, EventArgs e)
+        private void ResetBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Reset clicked");
-            _statusLabel.Text = "Resetting to default resolution...";
+            AppendStatus("Resetting to default resolution...");
         }
 
-        private void BrowseGameBtn_Click(object sender, EventArgs e)
+        private void BrowseGameBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Browse Game clicked");
             var openFileDialog = new OpenFileDialog
@@ -615,23 +795,25 @@ namespace ResolutionSwitcher.Main
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                AppendStatus($"Game selected: {openFileDialog.FileName}");
                 _logger.LogInfo($"Game selected: {openFileDialog.FileName}");
             }
         }
 
-        private void SettingsBtn_Click(object sender, EventArgs e)
+        private void SettingsBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Settings clicked");
+            AppendStatus("Settings clicked.");
         }
 
-        private void AboutBtn_Click(object sender, EventArgs e)
+        private void AboutBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("About clicked");
-            var aboutForm = new AboutForm();
+            using var aboutForm = new AboutForm();
             aboutForm.ShowDialog(this);
         }
 
-        private void LearnMoreBtn_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LearnMoreBtn_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             _logger.LogInfo("Learn More clicked");
             var modeForm = new Form
@@ -640,20 +822,27 @@ namespace ResolutionSwitcher.Main
                 Width = 700,
                 Height = 500,
                 StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false,
-                MinimizeBox = false
+                FormBorderStyle = FormBorderStyle.Sizable,
+                MaximizeBox = true,
+                MinimizeBox = false,
+                MinimumSize = new Size(480, 360),
+                BackColor = ThemeManager.Palette.FormBackground,
+                Font = new Font("Tahoma", 8f)
             };
 
             var rtb = new RichTextBox
             {
                 Dock = DockStyle.Fill,
-                Font = new Font("Tahoma", 9f),
+                Font = new Font("Courier New", 9f),
                 ReadOnly = true,
-                BorderStyle = BorderStyle.Fixed3D
+                BorderStyle = BorderStyle.None,
+                ScrollBars = RichTextBoxScrollBars.Vertical,
+                BackColor = ThemeManager.Palette.SectionBackground,
+                ForeColor = ThemeManager.Palette.TextColor,
+                WordWrap = false
             };
 
-            string modeText = @"AUTO-RESTORE HELPER
+            var modeText = @"AUTO-RESTORE HELPER
 ===================================================================
 Description:
 Automatically reverts your resolution back to your original settings when the game closes.
