@@ -98,6 +98,8 @@ namespace ResolutionSwitcher.Main
             int yPos = 20;
             const int frameWidth = 920;
             const int frameLeft = 40;
+            const int labelWidth = 100;
+            const int controlLeft = 150;
 
             // Profile section
             var profileFrame = new GroupBox
@@ -117,7 +119,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Profile:",
                 Left = 15,
                 Top = 25,
-                Width = 65,
+                Width = labelWidth,
                 Height = 25,
                 Font = new Font("Segoe UI", 10),
                 BackColor = Color.FromArgb(224, 224, 224)
@@ -126,7 +128,7 @@ namespace ResolutionSwitcher.Main
 
             var profileDropdown = new ComboBox
             {
-                Left = 90,
+                Left = controlLeft,
                 Top = 25,
                 Width = 200,
                 Height = 25,
@@ -145,7 +147,7 @@ namespace ResolutionSwitcher.Main
             var newProfileBtn = new Button
             {
                 Text = "+ New",
-                Left = 310,
+                Left = 375,
                 Top = 25,
                 Width = 70,
                 Height = 25,
@@ -157,7 +159,7 @@ namespace ResolutionSwitcher.Main
             var deleteProfileBtn = new Button
             {
                 Text = "Delete",
-                Left = 395,
+                Left = 460,
                 Top = 25,
                 Width = 70,
                 Height = 25,
@@ -187,7 +189,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Monitor:",
                 Left = 15,
                 Top = 25,
-                Width = 65,
+                Width = labelWidth,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -196,9 +198,9 @@ namespace ResolutionSwitcher.Main
 
             var monitorDropdown = new ComboBox
             {
-                Left = 90,
+                Left = controlLeft,
                 Top = 25,
-                Width = 790,
+                Width = 725,
                 Height = 25,
                 Name = "monitorDropdown",
                 BackColor = Color.White,
@@ -242,7 +244,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Preset:",
                 Left = 15,
                 Top = 25,
-                Width = 65,
+                Width = labelWidth,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -251,9 +253,9 @@ namespace ResolutionSwitcher.Main
 
             var presetDropdown = new ComboBox
             {
-                Left = 90,
+                Left = controlLeft,
                 Top = 25,
-                Width = 790,
+                Width = 725,
                 Height = 25,
                 Name = "presetDropdown",
                 BackColor = Color.White,
@@ -313,7 +315,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Custom:",
                 Left = 15,
                 Top = 65,
-                Width = 65,
+                Width = labelWidth,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -323,7 +325,7 @@ namespace ResolutionSwitcher.Main
             var widthLabel = new Label
             {
                 Text = "W:",
-                Left = 90,
+                Left = 150,
                 Top = 65,
                 Width = 25,
                 Height = 25,
@@ -335,7 +337,7 @@ namespace ResolutionSwitcher.Main
             var widthInput = new TextBox
             {
                 Text = "960",
-                Left = 120,
+                Left = 180,
                 Top = 65,
                 Width = 60,
                 Height = 25,
@@ -350,7 +352,7 @@ namespace ResolutionSwitcher.Main
             var heightLabel = new Label
             {
                 Text = "H:",
-                Left = 190,
+                Left = 250,
                 Top = 65,
                 Width = 25,
                 Height = 25,
@@ -362,7 +364,7 @@ namespace ResolutionSwitcher.Main
             var heightInput = new TextBox
             {
                 Text = "720",
-                Left = 220,
+                Left = 280,
                 Top = 65,
                 Width = 60,
                 Height = 25,
@@ -377,7 +379,7 @@ namespace ResolutionSwitcher.Main
             var hzLabel = new Label
             {
                 Text = "Hz:",
-                Left = 290,
+                Left = 350,
                 Top = 65,
                 Width = 35,
                 Height = 25,
@@ -389,7 +391,7 @@ namespace ResolutionSwitcher.Main
             var hzInput = new TextBox
             {
                 Text = "165",
-                Left = 330,
+                Left = 390,
                 Top = 65,
                 Width = 60,
                 Height = 25,
@@ -422,7 +424,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Game:",
                 Left = 15,
                 Top = 25,
-                Width = 65,
+                Width = labelWidth,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -431,9 +433,9 @@ namespace ResolutionSwitcher.Main
 
             var gameDropdown = new ComboBox
             {
-                Left = 90,
+                Left = controlLeft,
                 Top = 25,
-                Width = 630,
+                Width = 565,
                 Height = 25,
                 Name = "gameDropdown",
                 BackColor = Color.White,
@@ -450,9 +452,9 @@ namespace ResolutionSwitcher.Main
             var browseGameBtn = new Button
             {
                 Text = "ADD",
-                Left = 735,
+                Left = 745,
                 Top = 25,
-                Width = 145,
+                Width = 135,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -465,7 +467,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Launcher:",
                 Left = 15,
                 Top = 65,
-                Width = 65,
+                Width = labelWidth,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -474,9 +476,9 @@ namespace ResolutionSwitcher.Main
 
             var launchMethodDropdown = new ComboBox
             {
-                Left = 90,
+                Left = controlLeft,
                 Top = 65,
-                Width = 790,
+                Width = 725,
                 Height = 25,
                 Name = "launchMethodDropdown",
                 BackColor = Color.White,
