@@ -6,7 +6,7 @@ using System.Drawing;
 
 namespace ResolutionSwitcher.Main
 {
-    public partial class MainForm : Form
+    public class MainForm : Form
     {
         private ConfigManager _configManager;
         private List<DisplayManager.MonitorInfo> _detectedMonitors;
@@ -14,7 +14,6 @@ namespace ResolutionSwitcher.Main
 
         public MainForm()
         {
-            InitializeComponent();
             SetupUI();
             InitializeApplication();
         }
@@ -136,7 +135,7 @@ namespace ResolutionSwitcher.Main
             // Separator
             var sep1 = new Label
             {
-                Text = "─────────────────────────────────────────────────────────────",
+                Text = "─────────────────────────────────────────────────────────────────────────────",
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
@@ -313,7 +312,7 @@ namespace ResolutionSwitcher.Main
             // Separator
             var sep2 = new Label
             {
-                Text = "─────────────────────────────────────────────────────────────",
+                Text = "─────────────────────────────────────────────────────────────────────────────",
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
@@ -468,7 +467,7 @@ namespace ResolutionSwitcher.Main
             // Action buttons
             var sep3 = new Label
             {
-                Text = "─────────────────────────────────────────────────────────────",
+                Text = "─────────────────────────────────────────────────────────────────────────────",
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
