@@ -21,33 +21,35 @@ namespace ResolutionSwitcher.Main
         private void SetupUI()
         {
             this.Text = "ResolutionSwitcher";
-            this.Width = 700;
-            this.Height = 900;
+            this.Width = 1000;
+            this.Height = 1200;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(240, 240, 240);
-            this.MaximizeBox = false;
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = true;
+            this.MinimizeBox = true;
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.MinimumSize = new Size(800, 600);
 
             int yPos = 15;
-            int padding = 20;
+            int padding = 30;
             int controlWidth = this.Width - (padding * 2) - 20;
 
             // Title bar with buttons
             var titlePanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 50,
+                Height = 60,
                 BackColor = Color.FromArgb(240, 240, 240)
             };
 
             var settingsBtn = new Button
             {
                 Text = "⚙️",
-                Width = 40,
-                Height = 30,
-                Left = this.Width - 110,
+                Width = 50,
+                Height = 40,
+                Left = this.Width - 130,
                 Top = 10,
-                Font = new Font("Arial", 16),
+                Font = new Font("Arial", 18),
                 BackColor = Color.FromArgb(192, 192, 192),
                 ForeColor = Color.Black
             };
@@ -56,11 +58,11 @@ namespace ResolutionSwitcher.Main
             var aboutBtn = new Button
             {
                 Text = "?",
-                Width = 40,
-                Height = 30,
-                Left = this.Width - 60,
+                Width = 50,
+                Height = 40,
+                Left = this.Width - 70,
                 Top = 10,
-                Font = new Font("Arial", 14),
+                Font = new Font("Arial", 16),
                 BackColor = Color.FromArgb(192, 192, 192),
                 ForeColor = Color.Black
             };
@@ -84,23 +86,24 @@ namespace ResolutionSwitcher.Main
                 Text = "PROFILE:",
                 Left = padding,
                 Top = yPos,
-                Width = 100,
-                Height = 25,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Width = 120,
+                Height = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(240, 240, 240)
             };
             scrollPanel.Controls.Add(profileLabel);
 
             var profileDropdown = new ComboBox
             {
-                Left = padding + 110,
-                Top = yPos - 3,
-                Width = 200,
-                Height = 30,
+                Left = padding + 140,
+                Top = yPos,
+                Width = 250,
+                Height = 35,
                 Name = "profileDropdown",
                 BackColor = Color.White,
                 ForeColor = Color.Black,
-                Tag = "profileDropdown"
+                Tag = "profileDropdown",
+                Font = new Font("Segoe UI", 10)
             };
             profileDropdown.Items.Add("Gaming");
             profileDropdown.Items.Add("Streaming");
@@ -111,40 +114,43 @@ namespace ResolutionSwitcher.Main
             var newProfileBtn = new Button
             {
                 Text = "+ New",
-                Left = padding + 320,
-                Top = yPos - 3,
-                Width = 60,
-                Height = 30,
-                BackColor = Color.FromArgb(192, 192, 192)
+                Left = padding + 410,
+                Top = yPos,
+                Width = 80,
+                Height = 35,
+                BackColor = Color.FromArgb(192, 192, 192),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(newProfileBtn);
 
             var deleteProfileBtn = new Button
             {
                 Text = "Delete",
-                Left = padding + 390,
-                Top = yPos - 3,
-                Width = 60,
-                Height = 30,
-                BackColor = Color.FromArgb(192, 192, 192)
+                Left = padding + 510,
+                Top = yPos,
+                Width = 80,
+                Height = 35,
+                BackColor = Color.FromArgb(192, 192, 192),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(deleteProfileBtn);
 
-            yPos += 50;
+            yPos += 55;
 
             // Separator
             var sep1 = new Label
             {
-                Text = "─────────────────────────────────────────────────────────────────────────────",
+                Text = "─────────────────────────────────────────────────────────────────────────────────────────────────────",
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 20,
+                Height = 25,
                 BackColor = Color.FromArgb(240, 240, 240),
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9)
             };
             scrollPanel.Controls.Add(sep1);
-            yPos += 25;
+            yPos += 30;
 
             // Monitor section
             var monitorLabel = new Label
@@ -152,38 +158,40 @@ namespace ResolutionSwitcher.Main
                 Text = "MONITOR",
                 Left = padding,
                 Top = yPos,
-                Width = 100,
-                Height = 25,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Width = 150,
+                Height = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(240, 240, 240)
             };
             scrollPanel.Controls.Add(monitorLabel);
-            yPos += 30;
+            yPos += 40;
 
             var monitorSelectLabel = new Label
             {
                 Text = "Monitor:",
                 Left = padding,
                 Top = yPos,
-                Width = 70,
-                Height = 25,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Width = 100,
+                Height = 30,
+                BackColor = Color.FromArgb(240, 240, 240),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(monitorSelectLabel);
 
             var monitorDropdown = new ComboBox
             {
-                Left = padding + 80,
-                Top = yPos - 3,
-                Width = controlWidth - 90,
-                Height = 30,
+                Left = padding + 120,
+                Top = yPos,
+                Width = controlWidth - 140,
+                Height = 35,
                 Name = "monitorDropdown",
                 BackColor = Color.White,
                 ForeColor = Color.Black,
-                Tag = "monitorDropdown"
+                Tag = "monitorDropdown",
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(monitorDropdown);
-            yPos += 35;
+            yPos += 45;
 
             var monitorDefaultLabel = new Label
             {
@@ -191,13 +199,13 @@ namespace ResolutionSwitcher.Main
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 25,
+                Height = 30,
                 BackColor = Color.FromArgb(240, 240, 240),
                 ForeColor = Color.Gray,
-                Font = new Font("Segoe UI", 9)
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(monitorDefaultLabel);
-            yPos += 30;
+            yPos += 40;
 
             // Resolution section
             var resLabel = new Label
@@ -205,35 +213,37 @@ namespace ResolutionSwitcher.Main
                 Text = "RESOLUTION",
                 Left = padding,
                 Top = yPos,
-                Width = 150,
-                Height = 25,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Width = 200,
+                Height = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(240, 240, 240)
             };
             scrollPanel.Controls.Add(resLabel);
-            yPos += 30;
+            yPos += 40;
 
             var presetLabel = new Label
             {
                 Text = "Preset:",
                 Left = padding,
                 Top = yPos,
-                Width = 70,
-                Height = 25,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Width = 100,
+                Height = 30,
+                BackColor = Color.FromArgb(240, 240, 240),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(presetLabel);
 
             var presetDropdown = new ComboBox
             {
-                Left = padding + 80,
-                Top = yPos - 3,
-                Width = controlWidth - 90,
-                Height = 30,
+                Left = padding + 120,
+                Top = yPos,
+                Width = controlWidth - 140,
+                Height = 35,
                 Name = "presetDropdown",
                 BackColor = Color.White,
                 ForeColor = Color.Black,
-                Tag = "presetDropdown"
+                Tag = "presetDropdown",
+                Font = new Font("Segoe UI", 10)
             };
             presetDropdown.Items.Add("960x720 (4:3)");
             presetDropdown.Items.Add("1080x810 (4:3)");
@@ -245,83 +255,89 @@ namespace ResolutionSwitcher.Main
             presetDropdown.Items.Add("1728x1036 (5:3)");
             presetDropdown.SelectedIndex = 0;
             scrollPanel.Controls.Add(presetDropdown);
-            yPos += 35;
+            yPos += 45;
 
             var customResLabel = new Label
             {
                 Text = "Custom:",
                 Left = padding,
                 Top = yPos,
-                Width = 70,
-                Height = 25,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Width = 100,
+                Height = 30,
+                BackColor = Color.FromArgb(240, 240, 240),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(customResLabel);
 
             var widthInput = new TextBox
             {
                 Text = "960",
-                Left = padding + 80,
-                Top = yPos - 3,
-                Width = 60,
-                Height = 25,
+                Left = padding + 120,
+                Top = yPos,
+                Width = 80,
+                Height = 30,
                 Name = "widthInput",
                 BackColor = Color.White,
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(widthInput);
 
             var heightInput = new TextBox
             {
                 Text = "720",
-                Left = padding + 160,
-                Top = yPos - 3,
-                Width = 60,
-                Height = 25,
+                Left = padding + 220,
+                Top = yPos,
+                Width = 80,
+                Height = 30,
                 Name = "heightInput",
                 BackColor = Color.White,
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(heightInput);
 
             var hzLabel = new Label
             {
                 Text = "Hz:",
-                Left = padding + 235,
+                Left = padding + 320,
                 Top = yPos,
-                Width = 30,
-                Height = 25,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Width = 40,
+                Height = 30,
+                BackColor = Color.FromArgb(240, 240, 240),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(hzLabel);
 
             var hzInput = new TextBox
             {
                 Text = "165",
-                Left = padding + 265,
-                Top = yPos - 3,
-                Width = 60,
-                Height = 25,
+                Left = padding + 360,
+                Top = yPos,
+                Width = 80,
+                Height = 30,
                 Name = "hzInput",
                 BackColor = Color.White,
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(hzInput);
-            yPos += 35;
+            yPos += 45;
 
             // Separator
             var sep2 = new Label
             {
-                Text = "─────────────────────────────────────────────────────────────────────────────",
+                Text = "─────────────────────────────────────────────────────────────────────────────────────────────────────",
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 20,
+                Height = 25,
                 BackColor = Color.FromArgb(240, 240, 240),
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9)
             };
             scrollPanel.Controls.Add(sep2);
-            yPos += 25;
+            yPos += 30;
 
             // Game section
             var gameLabel = new Label
@@ -329,35 +345,37 @@ namespace ResolutionSwitcher.Main
                 Text = "GAME",
                 Left = padding,
                 Top = yPos,
-                Width = 150,
-                Height = 25,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Width = 200,
+                Height = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(240, 240, 240)
             };
             scrollPanel.Controls.Add(gameLabel);
-            yPos += 30;
+            yPos += 40;
 
             var gameNameLabel = new Label
             {
                 Text = "Game:",
                 Left = padding,
                 Top = yPos,
-                Width = 70,
-                Height = 25,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Width = 100,
+                Height = 30,
+                BackColor = Color.FromArgb(240, 240, 240),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(gameNameLabel);
 
             var gameDropdown = new ComboBox
             {
-                Left = padding + 80,
-                Top = yPos - 3,
-                Width = controlWidth - 170,
-                Height = 30,
+                Left = padding + 120,
+                Top = yPos,
+                Width = controlWidth - 220,
+                Height = 35,
                 Name = "gameDropdown",
                 BackColor = Color.White,
                 ForeColor = Color.Black,
-                Tag = "gameDropdown"
+                Tag = "gameDropdown",
+                Font = new Font("Segoe UI", 10)
             };
             gameDropdown.Items.Add("Counter-Strike 2");
             gameDropdown.Items.Add("Valorant");
@@ -368,37 +386,40 @@ namespace ResolutionSwitcher.Main
             var browseGameBtn = new Button
             {
                 Text = "Browse",
-                Left = controlWidth - 70,
-                Top = yPos - 3,
-                Width = 70,
-                Height = 30,
-                BackColor = Color.FromArgb(192, 192, 192)
+                Left = controlWidth - 80,
+                Top = yPos,
+                Width = 80,
+                Height = 35,
+                BackColor = Color.FromArgb(192, 192, 192),
+                Font = new Font("Segoe UI", 10)
             };
             browseGameBtn.Click += BrowseGameBtn_Click;
             scrollPanel.Controls.Add(browseGameBtn);
-            yPos += 35;
+            yPos += 45;
 
             var launchViaLabel = new Label
             {
                 Text = "Launch via:",
                 Left = padding,
                 Top = yPos,
-                Width = 70,
-                Height = 25,
-                BackColor = Color.FromArgb(240, 240, 240)
+                Width = 100,
+                Height = 30,
+                BackColor = Color.FromArgb(240, 240, 240),
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(launchViaLabel);
 
             var launchMethodDropdown = new ComboBox
             {
-                Left = padding + 80,
-                Top = yPos - 3,
-                Width = controlWidth - 90,
-                Height = 30,
+                Left = padding + 120,
+                Top = yPos,
+                Width = controlWidth - 140,
+                Height = 35,
                 Name = "launchMethodDropdown",
                 BackColor = Color.White,
                 ForeColor = Color.Black,
-                Tag = "launchMethodDropdown"
+                Tag = "launchMethodDropdown",
+                Font = new Font("Segoe UI", 10)
             };
             launchMethodDropdown.Items.Add("Steam");
             launchMethodDropdown.Items.Add("Steam (App ID)");
@@ -406,7 +427,7 @@ namespace ResolutionSwitcher.Main
             launchMethodDropdown.Items.Add("Custom Location");
             launchMethodDropdown.SelectedIndex = 0;
             scrollPanel.Controls.Add(launchMethodDropdown);
-            yPos += 35;
+            yPos += 45;
 
             // Launch Mode section
             var launchModeLabel = new Label
@@ -414,13 +435,13 @@ namespace ResolutionSwitcher.Main
                 Text = "LAUNCH MODE",
                 Left = padding,
                 Top = yPos,
-                Width = 150,
-                Height = 25,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Width = 200,
+                Height = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Color.FromArgb(240, 240, 240)
             };
             scrollPanel.Controls.Add(launchModeLabel);
-            yPos += 30;
+            yPos += 40;
 
             var autoRestoreRadio = new RadioButton
             {
@@ -428,65 +449,69 @@ namespace ResolutionSwitcher.Main
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 25,
+                Height = 30,
                 BackColor = Color.FromArgb(240, 240, 240),
                 Checked = true,
                 Name = "autoRestoreRadio",
-                Tag = "autoRestoreRadio"
+                Tag = "autoRestoreRadio",
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(autoRestoreRadio);
-            yPos += 30;
+            yPos += 40;
 
             var instantKillRadio = new RadioButton
             {
                 Text = "Instant Kill Mode (manual reset only)",
                 Left = padding,
                 Top = yPos,
-                Width = controlWidth - 100,
-                Height = 25,
+                Width = controlWidth - 120,
+                Height = 30,
                 BackColor = Color.FromArgb(240, 240, 240),
                 Name = "instantKillRadio",
-                Tag = "instantKillRadio"
+                Tag = "instantKillRadio",
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(instantKillRadio);
 
             var learnMoreBtn = new LinkLabel
             {
                 Text = "Learn More ▶",
-                Left = controlWidth - 90,
+                Left = controlWidth - 100,
                 Top = yPos,
-                Width = 100,
-                Height = 25,
+                Width = 120,
+                Height = 30,
                 BackColor = Color.FromArgb(240, 240, 240),
-                LinkColor = Color.Blue
+                LinkColor = Color.Blue,
+                Font = new Font("Segoe UI", 10)
             };
             learnMoreBtn.LinkClicked += LearnMoreBtn_LinkClicked;
             scrollPanel.Controls.Add(learnMoreBtn);
-            yPos += 35;
+            yPos += 45;
 
             // Action buttons
             var sep3 = new Label
             {
-                Text = "─────────────────────────────────────────────────────────────────────────────",
+                Text = "─────────────────────────────────────────────────────────────────────────────────────────────────────",
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 20,
+                Height = 25,
                 BackColor = Color.FromArgb(240, 240, 240),
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Segoe UI", 9)
             };
             scrollPanel.Controls.Add(sep3);
-            yPos += 25;
+            yPos += 30;
 
             var launchGameBtn = new Button
             {
                 Text = "LAUNCH GAME & APPLY",
                 Left = padding,
                 Top = yPos,
-                Width = (controlWidth - 10) / 3,
-                Height = 40,
+                Width = (controlWidth - 20) / 3,
+                Height = 50,
                 BackColor = Color.FromArgb(192, 192, 192),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
             launchGameBtn.Click += LaunchGameBtn_Click;
             scrollPanel.Controls.Add(launchGameBtn);
@@ -494,12 +519,12 @@ namespace ResolutionSwitcher.Main
             var applyOnlyBtn = new Button
             {
                 Text = "APPLY ONLY",
-                Left = padding + (controlWidth / 3) + 5,
+                Left = padding + (controlWidth / 3) + 10,
                 Top = yPos,
-                Width = (controlWidth - 10) / 3,
-                Height = 40,
+                Width = (controlWidth - 20) / 3,
+                Height = 50,
                 BackColor = Color.FromArgb(192, 192, 192),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
             applyOnlyBtn.Click += ApplyOnlyBtn_Click;
             scrollPanel.Controls.Add(applyOnlyBtn);
@@ -507,16 +532,16 @@ namespace ResolutionSwitcher.Main
             var resetBtn = new Button
             {
                 Text = "RESET",
-                Left = padding + ((controlWidth / 3) * 2) + 10,
+                Left = padding + ((controlWidth / 3) * 2) + 20,
                 Top = yPos,
-                Width = (controlWidth - 10) / 3,
-                Height = 40,
+                Width = (controlWidth - 20) / 3,
+                Height = 50,
                 BackColor = Color.FromArgb(192, 192, 192),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
             resetBtn.Click += ResetBtn_Click;
             scrollPanel.Controls.Add(resetBtn);
-            yPos += 50;
+            yPos += 60;
 
             // Status bar
             var statusLabel = new Label
@@ -525,14 +550,15 @@ namespace ResolutionSwitcher.Main
                 Left = padding,
                 Top = yPos,
                 Width = controlWidth,
-                Height = 25,
+                Height = 30,
                 BackColor = Color.FromArgb(240, 240, 240),
                 ForeColor = Color.Black,
                 Name = "statusLabel",
-                Tag = "statusLabel"
+                Tag = "statusLabel",
+                Font = new Font("Segoe UI", 10)
             };
             scrollPanel.Controls.Add(statusLabel);
-            yPos += 30;
+            yPos += 40;
 
             this.Controls.Add(scrollPanel);
         }
