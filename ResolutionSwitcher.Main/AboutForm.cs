@@ -11,7 +11,6 @@ namespace ResolutionSwitcher.Main
         private readonly List<RichTextBox> _contentBoxes = new List<RichTextBox>();
         private Panel _titlePanel = null!;
         private Label _titleLabel = null!;
-        private Label _subtitleLabel = null!;
         private TabControl _tabControl = null!;
 
         public AboutForm()
@@ -26,9 +25,9 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "About ResolutionSwitcher";
-            Width = 700;
-            Height = 800;
-            MinimumSize = new Size(480, 400);
+            Width = 720;
+            Height = 620;
+            MinimumSize = new Size(560, 480);
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = true;
             MinimizeBox = false;
@@ -40,7 +39,7 @@ namespace ResolutionSwitcher.Main
             _titlePanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 38,
+                Height = 40,
                 Padding = new Padding(8, 0, 8, 0)
             };
 
@@ -48,34 +47,22 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "About ResolutionSwitcher",
                 Dock = DockStyle.Fill,
-                Font = new Font("Tahoma", 11f, FontStyle.Bold),
+                Font = new Font("Tahoma", 13f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent
             };
 
-            _subtitleLabel = new Label
-            {
-                Text = "Retro utility reference",
-                Dock = DockStyle.Right,
-                Width = 190,
-                Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
-                TextAlign = ContentAlignment.MiddleRight,
-                BackColor = Color.Transparent
-            };
-
-            _titlePanel.Controls.Add(_subtitleLabel);
             _titlePanel.Controls.Add(_titleLabel);
 
             _tabControl = new TabControl
             {
                 Dock = DockStyle.Fill,
                 DrawMode = TabDrawMode.OwnerDrawFixed,
-                ItemSize = new Size(0, 24),
+                ItemSize = new Size(0, 26),
                 SizeMode = TabSizeMode.Fixed,
                 Padding = new Point(12, 4)
             };
             _tabControl.DrawItem += TabControl_DrawItem;
-            _tabControl.Paint += TabControl_Paint;
 
             _tabControl.TabPages.Add(CreateTabPage("Overview", GetOverviewText()));
             _tabControl.TabPages.Add(CreateTabPage("Features", GetFeaturesText()));
@@ -113,9 +100,9 @@ namespace ResolutionSwitcher.Main
                 BorderStyle = BorderStyle.None,
                 ScrollBars = RichTextBoxScrollBars.Vertical,
                 Dock = DockStyle.Fill,
-                Font = new Font("Courier New", 9f),
+                Font = new Font("Tahoma", 8.5f),
                 Text = text,
-                WordWrap = false,
+                WordWrap = true,
                 DetectUrls = false,
                 ShortcutsEnabled = true,
                 TabStop = false
@@ -131,6 +118,7 @@ namespace ResolutionSwitcher.Main
         private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
         {
             ApplyTheme();
+            _tabControl.Invalidate();
         }
 
         private void ApplyTheme()
@@ -141,7 +129,6 @@ namespace ResolutionSwitcher.Main
             ForeColor = theme.TextColor;
             _titlePanel.BackColor = theme.TitleBarColor;
             _titleLabel.ForeColor = theme.TitleBarTextColor;
-            _subtitleLabel.ForeColor = theme.SubtitleTextColor;
             _tabControl.BackColor = theme.FormBackground;
             _tabControl.ForeColor = theme.TextColor;
 
@@ -163,7 +150,6 @@ namespace ResolutionSwitcher.Main
                 contentBox.ForeColor = theme.TextColor;
             }
 
-            _tabControl.Invalidate();
             Invalidate(true);
         }
 
@@ -178,45 +164,27 @@ namespace ResolutionSwitcher.Main
             var page = _tabControl.TabPages[e.Index];
             var isSelected = e.Index == _tabControl.SelectedIndex;
             var rect = e.Bounds;
-            var tabBackColor = isSelected ? theme.TitleBarColor : theme.TabInactiveBackground;
+            var tabBackColor = isSelected ? ColorTranslator.FromHtml("#003C74") : theme.TabInactiveBackground;
             var textColor = isSelected ? Color.White : theme.TextColor;
-            var fontStyle = isSelected ? FontStyle.Bold : FontStyle.Regular;
+            var font = new Font("Tahoma", 8f, isSelected ? FontStyle.Bold : FontStyle.Regular);
 
             using (var brush = new SolidBrush(tabBackColor))
             {
                 e.Graphics.FillRectangle(brush, rect);
             }
 
-            if (!isSelected)
+            using (var edgePen = new Pen(ControlPaint.Dark(tabBackColor)))
             {
-                using var topPen = new Pen(ControlPaint.Light(tabBackColor));
-                using var edgePen = new Pen(ControlPaint.Dark(tabBackColor));
-                e.Graphics.DrawLine(topPen, rect.Left, rect.Top, rect.Right - 1, rect.Top);
-                e.Graphics.DrawLine(topPen, rect.Left, rect.Top, rect.Left, rect.Bottom - 1);
-                e.Graphics.DrawLine(edgePen, rect.Right - 1, rect.Top, rect.Right - 1, rect.Bottom - 1);
-                e.Graphics.DrawLine(edgePen, rect.Left, rect.Bottom - 1, rect.Right - 1, rect.Bottom - 1);
-            }
-            else
-            {
-                using var borderPen = new Pen(theme.TitleBarColor);
-                e.Graphics.DrawRectangle(borderPen, Rectangle.Inflate(rect, -1, -1));
+                e.Graphics.DrawRectangle(edgePen, Rectangle.Inflate(rect, -1, -1));
             }
 
             TextRenderer.DrawText(
                 e.Graphics,
                 page.Text,
-                new Font("Tahoma", 8f, fontStyle),
+                font,
                 rect,
                 textColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        }
-
-        private void TabControl_Paint(object? sender, PaintEventArgs e)
-        {
-            var theme = ThemeManager.Palette;
-            var y = _tabControl.DisplayRectangle.Top - 2;
-            using var brush = new SolidBrush(theme.TitleBarColor);
-            e.Graphics.FillRectangle(brush, 0, y, _tabControl.Width, 2);
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
 
         private static string GetOverviewText()
@@ -252,7 +220,22 @@ SYSTEM REQUIREMENTS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 • Windows 10 or Windows 11
 • Multi-monitor setups fully supported
-• Works with all GPU manufacturers (NVIDIA, AMD, Intel)";
+• Works with all GPU manufacturers (NVIDIA, AMD, Intel)
+
+VERSION INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Version:     1.0.0
+Runtime:     .NET 8 (self-contained)
+Platform:    Windows 10 / Windows 11 (x64)
+Config file: profiles.json (app folder)
+Theme file:  theme.cfg (app folder)
+Log file:    resolutionswitcher.log (app folder, if logging enabled)
+
+AUTHOR & CREDITS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Built for competitive gamers who want zero-overhead resolution switching.
+Inspired by DDU (Display Driver Uninstaller) UI philosophy:
+simple, direct, no fluff.";
         }
 
         private static string GetFeaturesText()

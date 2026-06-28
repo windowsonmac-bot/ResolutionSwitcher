@@ -15,17 +15,28 @@ namespace ResolutionSwitcher.Main
         private Panel _titlePanel = null!;
         private Panel _scrollPanel = null!;
         private Panel _statusPanel = null!;
+        private Panel _profileCardPanel = null!;
+        private Panel _statusSeparatorLine = null!;
         private Label _titleLabel = null!;
         private Label _subtitleLabel = null!;
         private Label _statusHeaderLabel = null!;
+        private Label _monitorDefaultLabel = null!;
+        private Label _profileCardLine1 = null!;
+        private Label _profileCardLine2 = null!;
         private RichTextBox _statusRichTextBox = null!;
         private Button _settingsButton = null!;
         private Button _aboutButton = null!;
-        private Button _themeToggleButton = null!;
+        private Button _lightThemeButton = null!;
+        private Button _darkThemeButton = null!;
+        private Button _debugButton = null!;
+        private Button _masterResetButton = null!;
         private Button _statusClearButton = null!;
         private ComboBox _monitorDropdown = null!;
-        private Label _monitorDefaultLabel = null!;
         private ComboBox _profileDropdown = null!;
+        private ComboBox _presetDropdown = null!;
+        private TextBox _widthInput = null!;
+        private TextBox _heightInput = null!;
+        private AspectRatioPreviewPanel _aspectRatioPreviewPanel = null!;
 
         public MainForm()
         {
@@ -34,6 +45,7 @@ namespace ResolutionSwitcher.Main
             ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
             ApplyTheme();
             InitializeApplication();
+            UpdateAspectRatioPreview();
         }
 
         private void SetupUI()
@@ -41,8 +53,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(780, 560);
-            MinimumSize = new Size(480, 400);
+            ClientSize = new Size(780, 680);
+            MinimumSize = new Size(540, 500);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -54,7 +66,7 @@ namespace ResolutionSwitcher.Main
             _titlePanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 38,
+                Height = 40,
                 Padding = new Padding(8, 0, 4, 0)
             };
             _titlePanel.SuspendLayout();
@@ -63,7 +75,7 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "ResolutionSwitcher",
                 Dock = DockStyle.Fill,
-                Font = new Font("Tahoma", 12f, FontStyle.Bold),
+                Font = new Font("Tahoma", 13f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent
             };
@@ -73,7 +85,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Display Resolution Manager",
                 Dock = DockStyle.Right,
                 AutoSize = false,
-                Width = 170,
+                Width = 185,
                 Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
                 TextAlign = ContentAlignment.MiddleRight,
                 BackColor = Color.Transparent
@@ -85,25 +97,35 @@ namespace ResolutionSwitcher.Main
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 AutoSize = true,
-                Padding = new Padding(0, 6, 0, 0),
+                Padding = new Padding(0, 8, 4, 0),
                 Margin = new Padding(0),
                 BackColor = Color.Transparent
             };
 
-            _themeToggleButton = new Button
+            _lightThemeButton = new Button
             {
-                Text = "Light / Dark",
-                Width = 78,
-                Height = 23,
+                Text = "☀ Light",
+                Width = 58,
+                Height = 24,
                 Font = new Font("Tahoma", 7.5f)
             };
-            _themeToggleButton.Click += ThemeToggleButton_Click;
+            _lightThemeButton.Click += LightThemeButton_Click;
+
+            _darkThemeButton = new Button
+            {
+                Text = "🌙 Dark",
+                Width = 54,
+                Height = 24,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 0, 0, 0)
+            };
+            _darkThemeButton.Click += DarkThemeButton_Click;
 
             _aboutButton = new Button
             {
                 Text = "About",
                 Width = 54,
-                Height = 23,
+                Height = 24,
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(4, 0, 0, 0)
             };
@@ -113,15 +135,38 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Settings",
                 Width = 64,
-                Height = 23,
+                Height = 24,
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(4, 0, 0, 0)
             };
             _settingsButton.Click += SettingsBtn_Click;
 
-            buttonStrip.Controls.Add(_themeToggleButton);
+            _debugButton = new Button
+            {
+                Text = "Debug",
+                Width = 54,
+                Height = 24,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 0, 0, 0)
+            };
+            _debugButton.Click += DebugBtn_Click;
+
+            _masterResetButton = new Button
+            {
+                Text = "Reset",
+                Width = 54,
+                Height = 24,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 0, 0, 0)
+            };
+            _masterResetButton.Click += MasterResetBtn_Click;
+
+            buttonStrip.Controls.Add(_lightThemeButton);
+            buttonStrip.Controls.Add(_darkThemeButton);
             buttonStrip.Controls.Add(_aboutButton);
             buttonStrip.Controls.Add(_settingsButton);
+            buttonStrip.Controls.Add(_debugButton);
+            buttonStrip.Controls.Add(_masterResetButton);
 
             _titlePanel.Controls.Add(_subtitleLabel);
             _titlePanel.Controls.Add(buttonStrip);
@@ -131,8 +176,8 @@ namespace ResolutionSwitcher.Main
             _statusPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 104,
-                MinimumSize = new Size(0, 80),
+                Height = 120,
+                MinimumSize = new Size(0, 96),
                 BorderStyle = BorderStyle.Fixed3D,
                 Padding = new Padding(8, 6, 8, 8)
             };
@@ -140,8 +185,9 @@ namespace ResolutionSwitcher.Main
             var statusHeaderPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 22,
-                BackColor = Color.Transparent
+                Height = 24,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0)
             };
 
             _statusHeaderLabel = new Label
@@ -164,22 +210,15 @@ namespace ResolutionSwitcher.Main
             };
             _statusClearButton.Click += (s, e) => _statusRichTextBox.Clear();
 
-            var headerSpacer = new Panel
+            _statusSeparatorLine = new Panel
             {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(8, 9, 0, 0),
-                BackColor = Color.Transparent
-            };
-            var headerLine = new Panel
-            {
-                Dock = DockStyle.Top,
+                Dock = DockStyle.Bottom,
                 Height = 1
             };
-            headerSpacer.Controls.Add(headerLine);
 
-            statusHeaderPanel.Controls.Add(headerSpacer);
             statusHeaderPanel.Controls.Add(_statusClearButton);
             statusHeaderPanel.Controls.Add(_statusHeaderLabel);
+            statusHeaderPanel.Controls.Add(_statusSeparatorLine);
 
             _statusRichTextBox = new RichTextBox
             {
@@ -217,8 +256,7 @@ namespace ResolutionSwitcher.Main
             };
             mainLayout.SuspendLayout();
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 7; i++)
             {
                 mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             }
@@ -237,8 +275,8 @@ namespace ResolutionSwitcher.Main
             _profileDropdown.Items.AddRange(new object[] { "Gaming", "Streaming", "Productivity" });
             _profileDropdown.SelectedIndex = 0;
 
-            var newProfileBtn = new Button { Text = "+ New", Width = 58, Height = 23, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
-            var deleteProfileBtn = new Button { Text = "Delete", Width = 58, Height = 23, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
+            var newProfileBtn = new Button { Text = "+ New", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
+            var deleteProfileBtn = new Button { Text = "Delete", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
 
             var profileFlow = new FlowLayoutPanel
             {
@@ -256,6 +294,38 @@ namespace ResolutionSwitcher.Main
             profileLayout.Controls.Add(profileFlow, 1, 0);
             profileLayout.ResumeLayout(false);
             profileGroup.Controls.Add(profileLayout);
+
+            _profileCardPanel = new Panel
+            {
+                Name = "_profileCardPanel",
+                BorderStyle = BorderStyle.Fixed3D,
+                Height = 56,
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 0, 0, 8),
+                Padding = new Padding(8, 6, 8, 4)
+            };
+
+            _profileCardLine1 = new Label
+            {
+                Name = "_profileCardLine1",
+                Dock = DockStyle.Top,
+                Height = 20,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Font = new Font("Tahoma", 7.5f),
+                Text = "Monitor: Not set   Resolution: Not set   Refresh: Not set Hz"
+            };
+
+            _profileCardLine2 = new Label
+            {
+                Name = "_profileCardLine2",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.TopLeft,
+                Font = new Font("Tahoma", 7.5f),
+                Text = "Game: Not set   Launch Mode: Not set"
+            };
+
+            _profileCardPanel.Controls.Add(_profileCardLine2);
+            _profileCardPanel.Controls.Add(_profileCardLine1);
 
             var monitorGroup = MakeGroup("Monitor");
             var monitorLayout = MakeTwoColLayout(2);
@@ -285,10 +355,10 @@ namespace ResolutionSwitcher.Main
             monitorGroup.Controls.Add(monitorLayout);
 
             var resGroup = MakeGroup("Resolution");
-            var resLayout = MakeTwoColLayout(2);
+            var resLayout = MakeTwoColLayout(3);
             resLayout.SuspendLayout();
 
-            var presetDropdown = new ComboBox
+            _presetDropdown = new ComboBox
             {
                 Name = "presetDropdown",
                 DropDownStyle = ComboBoxStyle.DropDownList,
@@ -296,47 +366,48 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Margin = new Padding(0, 2, 0, 2)
             };
-            presetDropdown.Items.Add("16:9  3840x2160  (2160p / 4K)");
-            presetDropdown.Items.Add("16:9  2560x1440  (1440p)");
-            presetDropdown.Items.Add("16:9  1920x1080  (1080p)");
-            presetDropdown.Items.Add("16:9  1600x900   (900p)");
-            presetDropdown.Items.Add("16:9  1366x768   (768p laptop)");
-            presetDropdown.Items.Add("16:9  1280x720   (720p)");
-            presetDropdown.Items.Add("16:9  1024x576   (576p)");
-            presetDropdown.Items.Add("16:9  800x450    (450p)");
-            presetDropdown.Items.Add("16:9  640x360    (360p)");
-            presetDropdown.Items.Add("16:10  3840x2400  (2400p)");
-            presetDropdown.Items.Add("16:10  2560x1600  (1600p)");
-            presetDropdown.Items.Add("16:10  1920x1200  (1200p)");
-            presetDropdown.Items.Add("16:10  1680x1050  (1050p)");
-            presetDropdown.Items.Add("16:10  1440x900   (900p)");
-            presetDropdown.Items.Add("16:10  1280x800   (800p)");
-            presetDropdown.Items.Add("16:10  1024x640   (640p)");
-            presetDropdown.Items.Add("16:10  800x500    (500p)");
-            presetDropdown.Items.Add("16:10  640x400    (400p)");
-            presetDropdown.Items.Add("4:3  2880x2160  (2160p)");
-            presetDropdown.Items.Add("4:3  1920x1440  (1440p)");
-            presetDropdown.Items.Add("4:3  1600x1200  (1200p)");
-            presetDropdown.Items.Add("4:3  1440x1080  (1080p)");
-            presetDropdown.Items.Add("4:3  1400x1050  (1050p)");
-            presetDropdown.Items.Add("4:3  1280x960   (960p)");
-            presetDropdown.Items.Add("4:3  1200x900   (900p)");
-            presetDropdown.Items.Add("4:3  1024x768   (768p)");
-            presetDropdown.Items.Add("4:3  960x720    (720p)");
-            presetDropdown.Items.Add("4:3  800x600    (600p)");
-            presetDropdown.Items.Add("4:3  640x480    (480p)");
-            presetDropdown.Items.Add("5:4  2700x2160  (2160p)");
-            presetDropdown.Items.Add("5:4  1800x1440  (1440p)");
-            presetDropdown.Items.Add("5:4  1500x1200  (1200p)");
-            presetDropdown.Items.Add("5:4  1350x1080  (1080p)");
-            presetDropdown.Items.Add("5:4  1312x1050  (1050p)");
-            presetDropdown.Items.Add("5:4  1280x1024  (1024p)");
-            presetDropdown.Items.Add("5:4  1125x900   (900p)");
-            presetDropdown.Items.Add("5:4  960x768    (768p)");
-            presetDropdown.Items.Add("5:4  900x720    (720p)");
-            presetDropdown.Items.Add("5:4  750x600    (600p)");
-            presetDropdown.Items.Add("5:4  600x480    (480p)");
-            presetDropdown.SelectedIndex = 0;
+            _presetDropdown.Items.Add("16:9  3840x2160  (2160p / 4K)");
+            _presetDropdown.Items.Add("16:9  2560x1440  (1440p)");
+            _presetDropdown.Items.Add("16:9  1920x1080  (1080p)");
+            _presetDropdown.Items.Add("16:9  1600x900   (900p)");
+            _presetDropdown.Items.Add("16:9  1366x768   (768p laptop)");
+            _presetDropdown.Items.Add("16:9  1280x720   (720p)");
+            _presetDropdown.Items.Add("16:9  1024x576   (576p)");
+            _presetDropdown.Items.Add("16:9  800x450    (450p)");
+            _presetDropdown.Items.Add("16:9  640x360    (360p)");
+            _presetDropdown.Items.Add("16:10  3840x2400  (2400p)");
+            _presetDropdown.Items.Add("16:10  2560x1600  (1600p)");
+            _presetDropdown.Items.Add("16:10  1920x1200  (1200p)");
+            _presetDropdown.Items.Add("16:10  1680x1050  (1050p)");
+            _presetDropdown.Items.Add("16:10  1440x900   (900p)");
+            _presetDropdown.Items.Add("16:10  1280x800   (800p)");
+            _presetDropdown.Items.Add("16:10  1024x640   (640p)");
+            _presetDropdown.Items.Add("16:10  800x500    (500p)");
+            _presetDropdown.Items.Add("16:10  640x400    (400p)");
+            _presetDropdown.Items.Add("4:3  2880x2160  (2160p)");
+            _presetDropdown.Items.Add("4:3  1920x1440  (1440p)");
+            _presetDropdown.Items.Add("4:3  1600x1200  (1200p)");
+            _presetDropdown.Items.Add("4:3  1440x1080  (1080p)");
+            _presetDropdown.Items.Add("4:3  1400x1050  (1050p)");
+            _presetDropdown.Items.Add("4:3  1280x960   (960p)");
+            _presetDropdown.Items.Add("4:3  1200x900   (900p)");
+            _presetDropdown.Items.Add("4:3  1024x768   (768p)");
+            _presetDropdown.Items.Add("4:3  960x720    (720p)");
+            _presetDropdown.Items.Add("4:3  800x600    (600p)");
+            _presetDropdown.Items.Add("4:3  640x480    (480p)");
+            _presetDropdown.Items.Add("5:4  2700x2160  (2160p)");
+            _presetDropdown.Items.Add("5:4  1800x1440  (1440p)");
+            _presetDropdown.Items.Add("5:4  1500x1200  (1200p)");
+            _presetDropdown.Items.Add("5:4  1350x1080  (1080p)");
+            _presetDropdown.Items.Add("5:4  1312x1050  (1050p)");
+            _presetDropdown.Items.Add("5:4  1280x1024  (1024p)");
+            _presetDropdown.Items.Add("5:4  1125x900   (900p)");
+            _presetDropdown.Items.Add("5:4  960x768    (768p)");
+            _presetDropdown.Items.Add("5:4  900x720    (720p)");
+            _presetDropdown.Items.Add("5:4  750x600    (600p)");
+            _presetDropdown.Items.Add("5:4  600x480    (480p)");
+            _presetDropdown.SelectedIndex = 0;
+            _presetDropdown.SelectedIndexChanged += (_, _) => UpdateAspectRatioPreview();
 
             var customFlow = new FlowLayoutPanel
             {
@@ -346,21 +417,43 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0, 2, 0, 2)
             };
-            var widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
-            var heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
+            _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
+            _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
             var hzInput = new TextBox { Name = "hzInput", Text = "240", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
 
+            _widthInput.TextChanged += (_, _) => UpdateAspectRatioPreview();
+            _heightInput.TextChanged += (_, _) => UpdateAspectRatioPreview();
+
             customFlow.Controls.Add(new Label { Text = "W:", Width = 20, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f) });
-            customFlow.Controls.Add(widthInput);
+            customFlow.Controls.Add(_widthInput);
             customFlow.Controls.Add(new Label { Text = "H:", Width = 24, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
-            customFlow.Controls.Add(heightInput);
+            customFlow.Controls.Add(_heightInput);
             customFlow.Controls.Add(new Label { Text = "Hz:", Width = 28, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
             customFlow.Controls.Add(hzInput);
 
+            _aspectRatioPreviewPanel = new AspectRatioPreviewPanel
+            {
+                Width = 80,
+                Height = 54,
+                Margin = new Padding(0, 0, 0, 2)
+            };
+
+            var previewHost = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoSize = true,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 2)
+            };
+            previewHost.Controls.Add(_aspectRatioPreviewPanel);
+
             resLayout.Controls.Add(MakeLabel("Preset:"), 0, 0);
-            resLayout.Controls.Add(presetDropdown, 1, 0);
+            resLayout.Controls.Add(_presetDropdown, 1, 0);
             resLayout.Controls.Add(MakeLabel("Custom:"), 0, 1);
             resLayout.Controls.Add(customFlow, 1, 1);
+            resLayout.Controls.Add(MakeLabel("Preview:"), 0, 2);
+            resLayout.Controls.Add(previewHost, 1, 2);
             resLayout.ResumeLayout(false);
             resGroup.Controls.Add(resLayout);
 
@@ -379,7 +472,7 @@ namespace ResolutionSwitcher.Main
             gameDropdown.Items.AddRange(new object[] { "Counter-Strike 2", "Valorant", "Other" });
             gameDropdown.SelectedIndex = 0;
 
-            var addGameBtn = new Button { Text = "Add...", Width = 58, Height = 23, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
+            var addGameBtn = new Button { Text = "Add...", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
             addGameBtn.Click += BrowseGameBtn_Click;
 
             var gameFlow = new FlowLayoutPanel
@@ -527,11 +620,12 @@ namespace ResolutionSwitcher.Main
             actionGroup.Controls.Add(actionBtnLayout);
 
             mainLayout.Controls.Add(profileGroup, 0, 0);
-            mainLayout.Controls.Add(monitorGroup, 0, 1);
-            mainLayout.Controls.Add(resGroup, 0, 2);
-            mainLayout.Controls.Add(gameGroup, 0, 3);
-            mainLayout.Controls.Add(launchGroup, 0, 4);
-            mainLayout.Controls.Add(actionGroup, 0, 5);
+            mainLayout.Controls.Add(_profileCardPanel, 0, 1);
+            mainLayout.Controls.Add(monitorGroup, 0, 2);
+            mainLayout.Controls.Add(resGroup, 0, 3);
+            mainLayout.Controls.Add(gameGroup, 0, 4);
+            mainLayout.Controls.Add(launchGroup, 0, 5);
+            mainLayout.Controls.Add(actionGroup, 0, 6);
 
             mainLayout.ResumeLayout(false);
             _scrollPanel.Controls.Add(mainLayout);
@@ -557,7 +651,7 @@ namespace ResolutionSwitcher.Main
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 6),
+                Margin = new Padding(0, 0, 0, 8),
                 Padding = new Padding(8, 10, 8, 6),
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 AutoSize = true,
@@ -584,6 +678,7 @@ namespace ResolutionSwitcher.Main
             {
                 tl.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             }
+
             return tl;
         }
 
@@ -620,10 +715,23 @@ namespace ResolutionSwitcher.Main
             _statusRichTextBox.BackColor = theme.StatusBackground;
             _statusRichTextBox.ForeColor = theme.TextColor;
             _monitorDefaultLabel.ForeColor = theme.GrayTextColor;
+            _profileCardPanel.BackColor = theme.SectionBackground;
+            _profileCardLine1.BackColor = theme.SectionBackground;
+            _profileCardLine1.ForeColor = theme.TextColor;
+            _profileCardLine2.BackColor = theme.SectionBackground;
+            _profileCardLine2.ForeColor = theme.TextColor;
+            _statusSeparatorLine.BackColor = BlendColors(theme.StatusHeaderColor, theme.StatusBackground);
 
-            ThemeManager.ApplyButtonStyle(_themeToggleButton);
+            _aspectRatioPreviewPanel.BackColor = theme.SectionBackground;
+            _aspectRatioPreviewPanel.ForeColor = theme.TextColor;
+            _aspectRatioPreviewPanel.Invalidate();
+
+            ThemeManager.ApplyButtonStyle(_lightThemeButton);
+            ThemeManager.ApplyButtonStyle(_darkThemeButton);
             ThemeManager.ApplyButtonStyle(_aboutButton);
             ThemeManager.ApplyButtonStyle(_settingsButton);
+            ThemeManager.ApplyButtonStyle(_debugButton);
+            ThemeManager.ApplyButtonStyle(_masterResetButton);
             ThemeManager.ApplyButtonStyle(_statusClearButton);
 
             ApplyThemeToControls(_scrollPanel, false);
@@ -636,9 +744,8 @@ namespace ResolutionSwitcher.Main
 
             foreach (Control child in parent.Controls)
             {
-                if (ReferenceEquals(child, _titlePanel) || ReferenceEquals(child, _statusPanel))
+                if (ReferenceEquals(child, _titlePanel) || ReferenceEquals(child, _statusPanel) || ReferenceEquals(child, _profileCardPanel) || ReferenceEquals(child, _aspectRatioPreviewPanel))
                 {
-                    // These panels use dedicated palette logic because they have custom chrome/status styling.
                     continue;
                 }
 
@@ -762,10 +869,16 @@ namespace ResolutionSwitcher.Main
             }
         }
 
-        private void ThemeToggleButton_Click(object? sender, EventArgs e)
+        private void LightThemeButton_Click(object? sender, EventArgs e)
         {
-            ThemeManager.ToggleTheme();
-            AppendStatus($"Theme switched to {ThemeManager.CurrentTheme} mode.");
+            ThemeManager.SetTheme(AppTheme.Light);
+            AppendStatus("Theme set to Light mode.");
+        }
+
+        private void DarkThemeButton_Click(object? sender, EventArgs e)
+        {
+            ThemeManager.SetTheme(AppTheme.Dark);
+            AppendStatus("Theme set to Dark mode.");
         }
 
         private void LaunchGameBtn_Click(object? sender, EventArgs e)
@@ -805,7 +918,22 @@ namespace ResolutionSwitcher.Main
         private void SettingsBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Settings clicked");
-            AppendStatus("Settings clicked.");
+            using var settingsForm = new SettingsForm();
+            settingsForm.ShowDialog(this);
+        }
+
+        private void DebugBtn_Click(object? sender, EventArgs e)
+        {
+            _logger.LogInfo("Debug clicked");
+            using var debugForm = new DebugForm();
+            debugForm.ShowDialog(this);
+        }
+
+        private void MasterResetBtn_Click(object? sender, EventArgs e)
+        {
+            _logger.LogInfo("Master Reset clicked");
+            using var masterResetForm = new MasterResetForm();
+            masterResetForm.ShowDialog(this);
         }
 
         private void AboutBtn_Click(object? sender, EventArgs e)
@@ -821,13 +949,13 @@ namespace ResolutionSwitcher.Main
             var modeForm = new Form
             {
                 Text = "Launch Modes - Detailed Comparison",
-                Width = 700,
-                Height = 500,
+                Width = 720,
+                Height = 620,
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.Sizable,
                 MaximizeBox = true,
                 MinimizeBox = false,
-                MinimumSize = new Size(480, 360),
+                MinimumSize = new Size(560, 480),
                 BackColor = ThemeManager.Palette.FormBackground,
                 Font = new Font("Tahoma", 8f)
             };
@@ -835,13 +963,13 @@ namespace ResolutionSwitcher.Main
             var rtb = new RichTextBox
             {
                 Dock = DockStyle.Fill,
-                Font = new Font("Courier New", 9f),
+                Font = new Font("Tahoma", 8.5f),
                 ReadOnly = true,
                 BorderStyle = BorderStyle.None,
                 ScrollBars = RichTextBoxScrollBars.Vertical,
                 BackColor = ThemeManager.Palette.SectionBackground,
                 ForeColor = ThemeManager.Palette.TextColor,
-                WordWrap = false
+                WordWrap = true
             };
 
             var modeText = @"AUTO-RESTORE HELPER
@@ -908,6 +1036,146 @@ Cons:
             rtb.Text = modeText;
             modeForm.Controls.Add(rtb);
             modeForm.ShowDialog(this);
+        }
+
+        private void UpdateAspectRatioPreview()
+        {
+            var ratio = ParseRatioFromPreset(_presetDropdown.SelectedItem?.ToString() ?? string.Empty);
+
+            if (int.TryParse(_widthInput.Text, out var width) && int.TryParse(_heightInput.Text, out var height) && width > 0 && height > 0)
+            {
+                var gcd = GreatestCommonDivisor(width, height);
+                if (gcd > 0)
+                {
+                    ratio = (width / gcd, height / gcd);
+                }
+            }
+
+            _aspectRatioPreviewPanel.SetRatio(ratio.Item1, ratio.Item2);
+        }
+
+        private static int GreatestCommonDivisor(int a, int b)
+        {
+            a = Math.Abs(a);
+            b = Math.Abs(b);
+
+            while (b != 0)
+            {
+                var temp = b;
+                b = a % b;
+                a = temp;
+            }
+
+            return a;
+        }
+
+        private (int, int) ParseRatioFromPreset(string item)
+        {
+            if (!string.IsNullOrWhiteSpace(item))
+            {
+                var parts = item.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 0)
+                {
+                    var ratioParts = parts[0].Split(':');
+                    if (ratioParts.Length == 2 && int.TryParse(ratioParts[0], out var left) && int.TryParse(ratioParts[1], out var right) && left > 0 && right > 0)
+                    {
+                        return (left, right);
+                    }
+                }
+            }
+
+            return (16, 9);
+        }
+
+        private static Color BlendColors(Color top, Color bottom)
+        {
+            return Color.FromArgb(
+                (top.R + bottom.R) / 2,
+                (top.G + bottom.G) / 2,
+                (top.B + bottom.B) / 2);
+        }
+
+        private sealed class AspectRatioPreviewPanel : Panel
+        {
+            private static readonly Color RatioFourThreeColor = ColorTranslator.FromHtml("#4CAF50");
+            private static readonly Color RatioSixteenNineColor = ColorTranslator.FromHtml("#2196F3");
+            private static readonly Color RatioFiveFourColor = ColorTranslator.FromHtml("#FF9800");
+            private static readonly Color RatioOtherColor = ColorTranslator.FromHtml("#9E9E9E");
+            private int _ratioWidth = 16;
+            private int _ratioHeight = 9;
+
+            public AspectRatioPreviewPanel()
+            {
+                DoubleBuffered = true;
+                BorderStyle = BorderStyle.FixedSingle;
+                Size = new Size(80, 54);
+                Margin = new Padding(0);
+            }
+
+            public void SetRatio(int width, int height)
+            {
+                _ratioWidth = width > 0 ? width : 16;
+                _ratioHeight = height > 0 ? height : 9;
+                Invalidate();
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+
+                e.Graphics.Clear(BackColor);
+
+                var color = GetRatioColor(_ratioWidth, _ratioHeight);
+                var available = new Rectangle(4, 3, Width - 8, Math.Max(16, Height - 22));
+
+                var scale = Math.Min((float)available.Width / _ratioWidth, (float)available.Height / _ratioHeight);
+                var drawWidth = Math.Max(8, (int)(_ratioWidth * scale));
+                var drawHeight = Math.Max(8, (int)(_ratioHeight * scale));
+                var drawRect = new Rectangle(
+                    available.X + (available.Width - drawWidth) / 2,
+                    available.Y + (available.Height - drawHeight) / 2,
+                    drawWidth,
+                    drawHeight);
+
+                using (var fill = new SolidBrush(color))
+                {
+                    e.Graphics.FillRectangle(fill, drawRect);
+                }
+
+                using (var border = new Pen(ControlPaint.Dark(color)))
+                {
+                    e.Graphics.DrawRectangle(border, drawRect);
+                }
+
+                var ratioTextRect = new Rectangle(0, Height - 16, Width, 14);
+                TextRenderer.DrawText(
+                    e.Graphics,
+                    $"{_ratioWidth}:{_ratioHeight}",
+                    new Font("Tahoma", 7.5f),
+                    ratioTextRect,
+                    ForeColor,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            }
+
+            private static Color GetRatioColor(int width, int height)
+            {
+                if (width == 4 && height == 3)
+                {
+                    return RatioFourThreeColor;
+                }
+
+                if (width == 16 && height == 9)
+                {
+                    return RatioSixteenNineColor;
+                }
+
+                if (width == 5 && height == 4)
+                {
+                    return RatioFiveFourColor;
+                }
+
+                return RatioOtherColor;
+            }
         }
     }
 }
