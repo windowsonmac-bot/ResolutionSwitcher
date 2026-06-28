@@ -36,7 +36,6 @@ namespace ResolutionSwitcher.Main
         private ComboBox _presetDropdown = null!;
         private TextBox _widthInput = null!;
         private TextBox _heightInput = null!;
-        private AspectRatioPreviewPanel _aspectRatioPreviewPanel = null!;
 
         public MainForm()
         {
@@ -45,7 +44,6 @@ namespace ResolutionSwitcher.Main
             ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
             ApplyTheme();
             InitializeApplication();
-            UpdateAspectRatioPreview();
         }
 
         private void SetupUI()
@@ -53,8 +51,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(780, 680);
-            MinimumSize = new Size(540, 500);
+            ClientSize = new Size(820, 740);
+            MinimumSize = new Size(600, 560);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -97,7 +95,7 @@ namespace ResolutionSwitcher.Main
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 AutoSize = true,
-                Padding = new Padding(0, 8, 4, 0),
+                Padding = new Padding(0, 7, 4, 0),
                 Margin = new Padding(0),
                 BackColor = Color.Transparent
             };
@@ -107,7 +105,8 @@ namespace ResolutionSwitcher.Main
                 Text = "☀ Light",
                 Width = 58,
                 Height = 24,
-                Font = new Font("Tahoma", 7.5f)
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(3, 0, 0, 0)
             };
             _lightThemeButton.Click += LightThemeButton_Click;
 
@@ -117,7 +116,7 @@ namespace ResolutionSwitcher.Main
                 Width = 54,
                 Height = 24,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(4, 0, 0, 0)
+                Margin = new Padding(3, 0, 0, 0)
             };
             _darkThemeButton.Click += DarkThemeButton_Click;
 
@@ -127,7 +126,7 @@ namespace ResolutionSwitcher.Main
                 Width = 54,
                 Height = 24,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(4, 0, 0, 0)
+                Margin = new Padding(3, 0, 0, 0)
             };
             _aboutButton.Click += AboutBtn_Click;
 
@@ -137,7 +136,7 @@ namespace ResolutionSwitcher.Main
                 Width = 64,
                 Height = 24,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(4, 0, 0, 0)
+                Margin = new Padding(3, 0, 0, 0)
             };
             _settingsButton.Click += SettingsBtn_Click;
 
@@ -147,7 +146,7 @@ namespace ResolutionSwitcher.Main
                 Width = 54,
                 Height = 24,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(4, 0, 0, 0)
+                Margin = new Padding(3, 0, 0, 0)
             };
             _debugButton.Click += DebugBtn_Click;
 
@@ -157,7 +156,7 @@ namespace ResolutionSwitcher.Main
                 Width = 54,
                 Height = 24,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(4, 0, 0, 0)
+                Margin = new Padding(3, 0, 0, 0)
             };
             _masterResetButton.Click += MasterResetBtn_Click;
 
@@ -355,7 +354,7 @@ namespace ResolutionSwitcher.Main
             monitorGroup.Controls.Add(monitorLayout);
 
             var resGroup = MakeGroup("Resolution");
-            var resLayout = MakeTwoColLayout(3);
+            var resLayout = MakeTwoColLayout(2);
             resLayout.SuspendLayout();
 
             _presetDropdown = new ComboBox
@@ -407,7 +406,6 @@ namespace ResolutionSwitcher.Main
             _presetDropdown.Items.Add("5:4  750x600    (600p)");
             _presetDropdown.Items.Add("5:4  600x480    (480p)");
             _presetDropdown.SelectedIndex = 0;
-            _presetDropdown.SelectedIndexChanged += (_, _) => UpdateAspectRatioPreview();
 
             var customFlow = new FlowLayoutPanel
             {
@@ -421,9 +419,6 @@ namespace ResolutionSwitcher.Main
             _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
             var hzInput = new TextBox { Name = "hzInput", Text = "240", Width = 52, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
 
-            _widthInput.TextChanged += (_, _) => UpdateAspectRatioPreview();
-            _heightInput.TextChanged += (_, _) => UpdateAspectRatioPreview();
-
             customFlow.Controls.Add(new Label { Text = "W:", Width = 20, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f) });
             customFlow.Controls.Add(_widthInput);
             customFlow.Controls.Add(new Label { Text = "H:", Width = 24, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
@@ -431,29 +426,10 @@ namespace ResolutionSwitcher.Main
             customFlow.Controls.Add(new Label { Text = "Hz:", Width = 28, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
             customFlow.Controls.Add(hzInput);
 
-            _aspectRatioPreviewPanel = new AspectRatioPreviewPanel
-            {
-                Width = 80,
-                Height = 54,
-                Margin = new Padding(0, 0, 0, 2)
-            };
-
-            var previewHost = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2)
-            };
-            previewHost.Controls.Add(_aspectRatioPreviewPanel);
-
             resLayout.Controls.Add(MakeLabel("Preset:"), 0, 0);
             resLayout.Controls.Add(_presetDropdown, 1, 0);
             resLayout.Controls.Add(MakeLabel("Custom:"), 0, 1);
             resLayout.Controls.Add(customFlow, 1, 1);
-            resLayout.Controls.Add(MakeLabel("Preview:"), 0, 2);
-            resLayout.Controls.Add(previewHost, 1, 2);
             resLayout.ResumeLayout(false);
             resGroup.Controls.Add(resLayout);
 
@@ -722,10 +698,6 @@ namespace ResolutionSwitcher.Main
             _profileCardLine2.ForeColor = theme.TextColor;
             _statusSeparatorLine.BackColor = BlendColors(theme.StatusHeaderColor, theme.StatusBackground);
 
-            _aspectRatioPreviewPanel.BackColor = theme.SectionBackground;
-            _aspectRatioPreviewPanel.ForeColor = theme.TextColor;
-            _aspectRatioPreviewPanel.Invalidate();
-
             ThemeManager.ApplyButtonStyle(_lightThemeButton);
             ThemeManager.ApplyButtonStyle(_darkThemeButton);
             ThemeManager.ApplyButtonStyle(_aboutButton);
@@ -744,7 +716,7 @@ namespace ResolutionSwitcher.Main
 
             foreach (Control child in parent.Controls)
             {
-                if (ReferenceEquals(child, _titlePanel) || ReferenceEquals(child, _statusPanel) || ReferenceEquals(child, _profileCardPanel) || ReferenceEquals(child, _aspectRatioPreviewPanel))
+                if (ReferenceEquals(child, _titlePanel) || ReferenceEquals(child, _statusPanel) || ReferenceEquals(child, _profileCardPanel))
                 {
                     continue;
                 }
@@ -949,13 +921,13 @@ namespace ResolutionSwitcher.Main
             var modeForm = new Form
             {
                 Text = "Launch Modes - Detailed Comparison",
-                Width = 720,
+                Width = 820,
                 Height = 620,
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.Sizable,
                 MaximizeBox = true,
                 MinimizeBox = false,
-                MinimumSize = new Size(560, 480),
+                MinimumSize = new Size(600, 480),
                 BackColor = ThemeManager.Palette.FormBackground,
                 Font = new Font("Tahoma", 8f)
             };
@@ -1038,144 +1010,12 @@ Cons:
             modeForm.ShowDialog(this);
         }
 
-        private void UpdateAspectRatioPreview()
-        {
-            var ratio = ParseRatioFromPreset(_presetDropdown.SelectedItem?.ToString() ?? string.Empty);
-
-            if (int.TryParse(_widthInput.Text, out var width) && int.TryParse(_heightInput.Text, out var height) && width > 0 && height > 0)
-            {
-                var gcd = GreatestCommonDivisor(width, height);
-                if (gcd > 0)
-                {
-                    ratio = (width / gcd, height / gcd);
-                }
-            }
-
-            _aspectRatioPreviewPanel.SetRatio(ratio.Item1, ratio.Item2);
-        }
-
-        private static int GreatestCommonDivisor(int a, int b)
-        {
-            a = Math.Abs(a);
-            b = Math.Abs(b);
-
-            while (b != 0)
-            {
-                var temp = b;
-                b = a % b;
-                a = temp;
-            }
-
-            return a;
-        }
-
-        private (int, int) ParseRatioFromPreset(string item)
-        {
-            if (!string.IsNullOrWhiteSpace(item))
-            {
-                var parts = item.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 0)
-                {
-                    var ratioParts = parts[0].Split(':');
-                    if (ratioParts.Length == 2 && int.TryParse(ratioParts[0], out var left) && int.TryParse(ratioParts[1], out var right) && left > 0 && right > 0)
-                    {
-                        return (left, right);
-                    }
-                }
-            }
-
-            return (16, 9);
-        }
-
         private static Color BlendColors(Color top, Color bottom)
         {
             return Color.FromArgb(
                 (top.R + bottom.R) / 2,
                 (top.G + bottom.G) / 2,
                 (top.B + bottom.B) / 2);
-        }
-
-        private sealed class AspectRatioPreviewPanel : Panel
-        {
-            private static readonly Color RatioFourThreeColor = ColorTranslator.FromHtml("#4CAF50");
-            private static readonly Color RatioSixteenNineColor = ColorTranslator.FromHtml("#2196F3");
-            private static readonly Color RatioFiveFourColor = ColorTranslator.FromHtml("#FF9800");
-            private static readonly Color RatioOtherColor = ColorTranslator.FromHtml("#9E9E9E");
-            private int _ratioWidth = 16;
-            private int _ratioHeight = 9;
-
-            public AspectRatioPreviewPanel()
-            {
-                DoubleBuffered = true;
-                BorderStyle = BorderStyle.FixedSingle;
-                Size = new Size(80, 54);
-                Margin = new Padding(0);
-            }
-
-            public void SetRatio(int width, int height)
-            {
-                _ratioWidth = width > 0 ? width : 16;
-                _ratioHeight = height > 0 ? height : 9;
-                Invalidate();
-            }
-
-            protected override void OnPaint(PaintEventArgs e)
-            {
-                base.OnPaint(e);
-
-                e.Graphics.Clear(BackColor);
-
-                var color = GetRatioColor(_ratioWidth, _ratioHeight);
-                var available = new Rectangle(4, 3, Width - 8, Math.Max(16, Height - 22));
-
-                var scale = Math.Min((float)available.Width / _ratioWidth, (float)available.Height / _ratioHeight);
-                var drawWidth = Math.Max(8, (int)(_ratioWidth * scale));
-                var drawHeight = Math.Max(8, (int)(_ratioHeight * scale));
-                var drawRect = new Rectangle(
-                    available.X + (available.Width - drawWidth) / 2,
-                    available.Y + (available.Height - drawHeight) / 2,
-                    drawWidth,
-                    drawHeight);
-
-                using (var fill = new SolidBrush(color))
-                {
-                    e.Graphics.FillRectangle(fill, drawRect);
-                }
-
-                using (var border = new Pen(ControlPaint.Dark(color)))
-                {
-                    e.Graphics.DrawRectangle(border, drawRect);
-                }
-
-                var ratioTextRect = new Rectangle(0, Height - 16, Width, 14);
-                TextRenderer.DrawText(
-                    e.Graphics,
-                    $"{_ratioWidth}:{_ratioHeight}",
-                    new Font("Tahoma", 7.5f),
-                    ratioTextRect,
-                    ForeColor,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-            }
-
-            private static Color GetRatioColor(int width, int height)
-            {
-                if (width == 4 && height == 3)
-                {
-                    return RatioFourThreeColor;
-                }
-
-                if (width == 16 && height == 9)
-                {
-                    return RatioSixteenNineColor;
-                }
-
-                if (width == 5 && height == 4)
-                {
-                    return RatioFiveFourColor;
-                }
-
-                return RatioOtherColor;
-            }
         }
     }
 }
