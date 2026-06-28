@@ -24,7 +24,6 @@ namespace ResolutionSwitcher.Main
 
         private void MainForm_Resize(object sender, EventArgs e)
         {
-            // Reposition buttons when window resizes
             if (_titlePanel != null && _titlePanel.Controls.Count >= 2)
             {
                 var settingsBtn = _titlePanel.Controls[0] as Button;
@@ -48,8 +47,6 @@ namespace ResolutionSwitcher.Main
             this.MinimizeBox = true;
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.MinimumSize = new Size(800, 600);
-
-            int padding = 20;
 
             // Title bar with buttons
             _titlePanel = new Panel
@@ -98,15 +95,17 @@ namespace ResolutionSwitcher.Main
                 BackColor = Color.FromArgb(224, 224, 224)
             };
 
-            int yPos = padding;
+            int yPos = 20;
+            const int frameWidth = 920;
+            const int frameLeft = 40;
 
-            // Profile section frame
+            // Profile section
             var profileFrame = new GroupBox
             {
                 Text = "PROFILE",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 90,
                 ForeColor = Color.Black,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -118,7 +117,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Profile:",
                 Left = 15,
                 Top = 25,
-                Width = 70,
+                Width = 65,
                 Height = 25,
                 Font = new Font("Segoe UI", 10),
                 BackColor = Color.FromArgb(224, 224, 224)
@@ -127,7 +126,7 @@ namespace ResolutionSwitcher.Main
 
             var profileDropdown = new ComboBox
             {
-                Left = 100,
+                Left = 90,
                 Top = 25,
                 Width = 200,
                 Height = 25,
@@ -146,7 +145,7 @@ namespace ResolutionSwitcher.Main
             var newProfileBtn = new Button
             {
                 Text = "+ New",
-                Left = 320,
+                Left = 310,
                 Top = 25,
                 Width = 70,
                 Height = 25,
@@ -158,7 +157,7 @@ namespace ResolutionSwitcher.Main
             var deleteProfileBtn = new Button
             {
                 Text = "Delete",
-                Left = 405,
+                Left = 395,
                 Top = 25,
                 Width = 70,
                 Height = 25,
@@ -170,13 +169,13 @@ namespace ResolutionSwitcher.Main
             scrollPanel.Controls.Add(profileFrame);
             yPos += 105;
 
-            // Monitor section frame
+            // Monitor section
             var monitorFrame = new GroupBox
             {
                 Text = "MONITOR",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 100,
                 ForeColor = Color.Black,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -188,7 +187,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Monitor:",
                 Left = 15,
                 Top = 25,
-                Width = 70,
+                Width = 65,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -197,9 +196,9 @@ namespace ResolutionSwitcher.Main
 
             var monitorDropdown = new ComboBox
             {
-                Left = 100,
+                Left = 90,
                 Top = 25,
-                Width = this.Width - (padding * 2) - 150,
+                Width = 790,
                 Height = 25,
                 Name = "monitorDropdown",
                 BackColor = Color.White,
@@ -213,8 +212,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Current Default: 2560 x 1440 @ 165 Hz (Auto-Detected)",
                 Left = 15,
-                Top = 55,
-                Width = this.Width - (padding * 2) - 50,
+                Top = 60,
+                Width = 865,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 ForeColor = Color.FromArgb(64, 64, 64),
@@ -225,13 +224,13 @@ namespace ResolutionSwitcher.Main
             scrollPanel.Controls.Add(monitorFrame);
             yPos += 115;
 
-            // Resolution section frame
+            // Resolution section
             var resFrame = new GroupBox
             {
                 Text = "RESOLUTION",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 140,
                 ForeColor = Color.Black,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -243,7 +242,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Preset:",
                 Left = 15,
                 Top = 25,
-                Width = 70,
+                Width = 65,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -252,9 +251,9 @@ namespace ResolutionSwitcher.Main
 
             var presetDropdown = new ComboBox
             {
-                Left = 100,
+                Left = 90,
                 Top = 25,
-                Width = this.Width - (padding * 2) - 150,
+                Width = 790,
                 Height = 25,
                 Name = "presetDropdown",
                 BackColor = Color.White,
@@ -313,8 +312,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Custom:",
                 Left = 15,
-                Top = 60,
-                Width = 70,
+                Top = 65,
+                Width = 65,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -324,8 +323,8 @@ namespace ResolutionSwitcher.Main
             var widthLabel = new Label
             {
                 Text = "W:",
-                Left = 100,
-                Top = 60,
+                Left = 90,
+                Top = 65,
                 Width = 25,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -336,8 +335,8 @@ namespace ResolutionSwitcher.Main
             var widthInput = new TextBox
             {
                 Text = "960",
-                Left = 130,
-                Top = 60,
+                Left = 120,
+                Top = 65,
                 Width = 60,
                 Height = 25,
                 Name = "widthInput",
@@ -351,8 +350,8 @@ namespace ResolutionSwitcher.Main
             var heightLabel = new Label
             {
                 Text = "H:",
-                Left = 200,
-                Top = 60,
+                Left = 190,
+                Top = 65,
                 Width = 25,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -363,8 +362,8 @@ namespace ResolutionSwitcher.Main
             var heightInput = new TextBox
             {
                 Text = "720",
-                Left = 230,
-                Top = 60,
+                Left = 220,
+                Top = 65,
                 Width = 60,
                 Height = 25,
                 Name = "heightInput",
@@ -378,8 +377,8 @@ namespace ResolutionSwitcher.Main
             var hzLabel = new Label
             {
                 Text = "Hz:",
-                Left = 300,
-                Top = 60,
+                Left = 290,
+                Top = 65,
                 Width = 35,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -390,8 +389,8 @@ namespace ResolutionSwitcher.Main
             var hzInput = new TextBox
             {
                 Text = "165",
-                Left = 340,
-                Top = 60,
+                Left = 330,
+                Top = 65,
                 Width = 60,
                 Height = 25,
                 Name = "hzInput",
@@ -405,13 +404,13 @@ namespace ResolutionSwitcher.Main
             scrollPanel.Controls.Add(resFrame);
             yPos += 155;
 
-            // Game section frame
+            // Game section
             var gameFrame = new GroupBox
             {
                 Text = "GAME",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 125,
                 ForeColor = Color.Black,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -423,7 +422,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Game:",
                 Left = 15,
                 Top = 25,
-                Width = 70,
+                Width = 65,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -432,9 +431,9 @@ namespace ResolutionSwitcher.Main
 
             var gameDropdown = new ComboBox
             {
-                Left = 100,
+                Left = 90,
                 Top = 25,
-                Width = this.Width - (padding * 2) - 200,
+                Width = 630,
                 Height = 25,
                 Name = "gameDropdown",
                 BackColor = Color.White,
@@ -451,9 +450,9 @@ namespace ResolutionSwitcher.Main
             var browseGameBtn = new Button
             {
                 Text = "ADD",
-                Left = this.Width - (padding * 2) - 100,
+                Left = 735,
                 Top = 25,
-                Width = 85,
+                Width = 145,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -465,8 +464,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = "Launcher:",
                 Left = 15,
-                Top = 60,
-                Width = 70,
+                Top = 65,
+                Width = 65,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 10)
@@ -475,9 +474,9 @@ namespace ResolutionSwitcher.Main
 
             var launchMethodDropdown = new ComboBox
             {
-                Left = 100,
-                Top = 60,
-                Width = this.Width - (padding * 2) - 150,
+                Left = 90,
+                Top = 65,
+                Width = 790,
                 Height = 25,
                 Name = "launchMethodDropdown",
                 BackColor = Color.White,
@@ -495,13 +494,13 @@ namespace ResolutionSwitcher.Main
             scrollPanel.Controls.Add(gameFrame);
             yPos += 140;
 
-            // Launch Mode section frame
+            // Launch Mode section
             var launchModeFrame = new GroupBox
             {
                 Text = "LAUNCH MODE",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 120,
                 ForeColor = Color.Black,
                 BackColor = Color.FromArgb(224, 224, 224),
@@ -513,7 +512,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Auto-Restore Helper (auto-revert when game closes)",
                 Left = 15,
                 Top = 25,
-                Width = this.Width - (padding * 2) - 60,
+                Width = 860,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Checked = true,
@@ -529,7 +528,7 @@ namespace ResolutionSwitcher.Main
                 Text = "Instant Kill Mode (manual reset only)",
                 Left = 15,
                 Top = 55,
-                Width = this.Width - (padding * 2) - 150,
+                Width = 700,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Name = "instantKillRadio",
@@ -542,9 +541,9 @@ namespace ResolutionSwitcher.Main
             var learnMoreBtn = new LinkLabel
             {
                 Text = "Learn More ▶",
-                Left = this.Width - (padding * 2) - 120,
+                Left = 745,
                 Top = 55,
-                Width = 110,
+                Width = 130,
                 Height = 25,
                 BackColor = Color.FromArgb(224, 224, 224),
                 ForeColor = Color.Blue,
@@ -559,27 +558,25 @@ namespace ResolutionSwitcher.Main
             scrollPanel.Controls.Add(launchModeFrame);
             yPos += 135;
 
-            // Action buttons frame
+            // Action buttons
             var actionFrame = new GroupBox
             {
                 Text = "ACTIONS",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 85,
                 ForeColor = Color.Black,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
 
-            int btnWidth = (this.Width - (padding * 2) - 60) / 3;
-
             var applyLaunchBtn = new Button
             {
                 Text = "APPLY AND LAUNCH GAME",
                 Left = 15,
                 Top = 25,
-                Width = btnWidth,
+                Width = 280,
                 Height = 45,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 9, FontStyle.Bold)
@@ -590,9 +587,9 @@ namespace ResolutionSwitcher.Main
             var applyOnlyBtn = new Button
             {
                 Text = "APPLY ONLY",
-                Left = 15 + btnWidth + 15,
+                Left = 310,
                 Top = 25,
-                Width = btnWidth,
+                Width = 280,
                 Height = 45,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 9, FontStyle.Bold)
@@ -603,9 +600,9 @@ namespace ResolutionSwitcher.Main
             var resetBtn = new Button
             {
                 Text = "RESET",
-                Left = 15 + (btnWidth + 15) * 2,
+                Left = 605,
                 Top = 25,
-                Width = btnWidth,
+                Width = 280,
                 Height = 45,
                 BackColor = Color.FromArgb(224, 224, 224),
                 Font = new Font("Segoe UI", 9, FontStyle.Bold)
@@ -620,9 +617,9 @@ namespace ResolutionSwitcher.Main
             var statusLabel = new Label
             {
                 Text = "Status: Ready",
-                Left = padding,
+                Left = frameLeft,
                 Top = yPos,
-                Width = this.Width - (padding * 2) - 20,
+                Width = frameWidth,
                 Height = 30,
                 BackColor = Color.FromArgb(192, 192, 192),
                 ForeColor = Color.Black,
@@ -643,10 +640,7 @@ namespace ResolutionSwitcher.Main
             {
                 _logger.LogInfo("Initializing ResolutionSwitcher main application");
 
-                // Initialize config manager
                 _configManager = new ConfigManager();
-
-                // Detect monitors
                 _detectedMonitors = DisplayManager.GetMonitors();
 
                 if (_detectedMonitors.Count == 0)
@@ -656,10 +650,8 @@ namespace ResolutionSwitcher.Main
                     return;
                 }
 
-                // Initialize config if first run
                 _configManager.InitializeFromDetectedMonitors(_detectedMonitors);
 
-                // Populate monitor dropdown
                 var monitorDropdown = this.Controls.Cast<Control>()
                     .FirstOrDefault(c => c.Name == "monitorDropdown") as ComboBox;
                 if (monitorDropdown != null)
