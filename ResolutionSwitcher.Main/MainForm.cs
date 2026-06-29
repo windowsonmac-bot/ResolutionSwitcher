@@ -56,8 +56,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(780, 800);
-            MinimumSize = new Size(600, 620);
+            ClientSize = new Size(820, 840);
+            MinimumSize = new Size(630, 650);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -256,6 +256,7 @@ namespace ResolutionSwitcher.Main
             }
 
             var profileGroup = MakeGroup("Profile");
+            profileGroup.Padding = new Padding(6, 14, 6, 2);
             var profileLayout = MakeTwoColLayout(1);
             profileLayout.SuspendLayout();
 
@@ -322,6 +323,7 @@ namespace ResolutionSwitcher.Main
             _profileCardPanel.Controls.Add(_profileCardLine1);
 
             var monitorGroup = MakeGroup("Monitor");
+            monitorGroup.Padding = new Padding(6, 14, 6, 2);
             var monitorLayout = MakeTwoColLayout(2);
             monitorLayout.SuspendLayout();
 
@@ -330,7 +332,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             _monitorDefaultLabel = new Label
             {
@@ -338,7 +340,7 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 7.5f),
                 TextAlign = ContentAlignment.MiddleLeft,
-                Margin = new Padding(0, 0, 0, 2)
+                Margin = new Padding(0, 2, 0, 2)
             };
 
             monitorLayout.Controls.Add(MakeLabel("Monitor:"), 0, 0);
@@ -349,8 +351,10 @@ namespace ResolutionSwitcher.Main
             monitorGroup.Controls.Add(monitorLayout);
 
             var resGroup = MakeGroup("Resolution");
+            resGroup.Padding = new Padding(6, 14, 6, 2);
             var resLayout = MakeTwoColLayout(3);
             resLayout.SuspendLayout();
+            resLayout.Padding = new Padding(0);
 
             _presetDropdown = new ComboBox
             {
@@ -358,7 +362,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             _presetDropdown.Items.AddRange(new object[]
             {
@@ -441,7 +445,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             hzPanel.Controls.Add(_hzDropdown);
             hzPanel.Controls.Add(_customHzInput);
@@ -453,7 +457,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
             _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
@@ -478,6 +482,7 @@ namespace ResolutionSwitcher.Main
             SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
             var gameGroup = MakeGroup("Game");
+            gameGroup.Padding = new Padding(6, 14, 6, 2);
             var gameLayout = MakeTwoColLayout(3);
             gameLayout.SuspendLayout();
 
@@ -501,7 +506,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             gameFlow.Controls.Add(gameDropdown);
             gameFlow.Controls.Add(addGameBtn);
@@ -512,7 +517,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             launchMethodDropdown.Items.AddRange(new object[] { "Steam", "Steam (App ID)", "Direct EXE Path", "Custom Location" });
             launchMethodDropdown.SelectedIndex = 0;
@@ -549,7 +554,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 1, 0, 1)
+                Margin = new Padding(0, 0, 0, 0)
             };
             steamBtnFlow.Controls.Add(scanSteamBtn);
             steamBtnFlow.Controls.Add(steamComingLabel);
@@ -745,8 +750,9 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 1, 6, 1),
-                AutoSize = false
+                Margin = new Padding(0, 0, 6, 0),
+                AutoSize = false,
+                MinimumSize = new Size(0, 22)
             };
         }
 

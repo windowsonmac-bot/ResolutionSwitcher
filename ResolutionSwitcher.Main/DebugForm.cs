@@ -95,6 +95,7 @@ namespace ResolutionSwitcher.Main
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
                 AutoSize = true,
+                Padding = new Padding(0, 4, 0, 4),
                 Margin = new Padding(0, 8, 0, 0)
             };
 
@@ -103,33 +104,36 @@ namespace ResolutionSwitcher.Main
                 Name = "_enableLoggingCheckBox",
                 Text = "Enable debug logging",
                 AutoSize = true,
-                Margin = new Padding(0, 6, 10, 0)
+                Margin = new Padding(0, 4, 12, 4)
             };
 
             var openLogFileButton = new Button
             {
                 Text = "Open Log File",
-                Width = 110,
-                Height = 24,
-                Font = new Font("Tahoma", 7.5f)
+                AutoSize = true,
+                Padding = new Padding(10, 4, 10, 4),
+                Font = new Font("Tahoma", 8f),
+                Margin = new Padding(4, 2, 0, 2)
             };
             openLogFileButton.Click += (_, _) => MessageBox.Show("Log file integration will be available in the next update.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             var clearLogButton = new Button
             {
                 Text = "Clear Log",
-                Width = 80,
-                Height = 24,
-                Font = new Font("Tahoma", 7.5f)
+                AutoSize = true,
+                Padding = new Padding(10, 4, 10, 4),
+                Font = new Font("Tahoma", 8f),
+                Margin = new Padding(4, 2, 0, 2)
             };
             clearLogButton.Click += (_, _) => _logRichTextBox.Clear();
 
             var copyAllButton = new Button
             {
                 Text = "Copy All",
-                Width = 80,
-                Height = 24,
-                Font = new Font("Tahoma", 7.5f)
+                AutoSize = true,
+                Padding = new Padding(10, 4, 10, 4),
+                Font = new Font("Tahoma", 8f),
+                Margin = new Padding(4, 2, 0, 2)
             };
             copyAllButton.Click += (_, _) =>
             {
