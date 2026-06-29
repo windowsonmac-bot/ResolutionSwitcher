@@ -56,8 +56,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(820, 840);
-            MinimumSize = new Size(630, 650);
+            ClientSize = new Size(820, 880);
+            MinimumSize = new Size(630, 700);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -250,13 +250,12 @@ namespace ResolutionSwitcher.Main
             };
             mainLayout.SuspendLayout();
             mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 6; i++)
             {
                 mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             }
 
             var profileGroup = MakeGroup("Profile");
-            profileGroup.Padding = new Padding(6, 14, 6, 2);
             var profileLayout = MakeTwoColLayout(1);
             profileLayout.SuspendLayout();
 
@@ -265,7 +264,8 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Tahoma", 8f),
                 Anchor = AnchorStyles.Left | AnchorStyles.Right,
-                Width = 180
+                Width = 180,
+                Margin = new Padding(0)
             };
             _profileDropdown.Items.AddRange(new object[] { "Gaming", "Streaming", "Productivity" });
             _profileDropdown.SelectedIndex = 0;
@@ -279,6 +279,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
+                Padding = new Padding(0),
                 Margin = new Padding(0, 3, 0, 3)
             };
             profileFlow.Controls.Add(_profileDropdown);
@@ -323,7 +324,6 @@ namespace ResolutionSwitcher.Main
             _profileCardPanel.Controls.Add(_profileCardLine1);
 
             var monitorGroup = MakeGroup("Monitor");
-            monitorGroup.Padding = new Padding(6, 14, 6, 2);
             var monitorLayout = MakeTwoColLayout(2);
             monitorLayout.SuspendLayout();
 
@@ -351,7 +351,6 @@ namespace ResolutionSwitcher.Main
             monitorGroup.Controls.Add(monitorLayout);
 
             var resGroup = MakeGroup("Resolution");
-            resGroup.Padding = new Padding(6, 14, 6, 2);
             var resLayout = MakeTwoColLayout(3);
             resLayout.SuspendLayout();
             resLayout.Padding = new Padding(0);
@@ -417,7 +416,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Width = 100,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 2, 4, 2)
+                Margin = new Padding(0, 0, 4, 0)
             };
             _hzDropdown.Items.AddRange(new object[] { "24", "25", "29", "30", "48", "50", "60", "72", "75", "85", "90", "100", "120", "144", "165", "180", "200", "240", "280", "300", "360", "480", "500", "1000", "Custom..." });
 
@@ -427,7 +426,7 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Text = "",
                 Visible = false,
-                Margin = new Padding(0, 3, 2, 3)
+                Margin = new Padding(0, 0, 2, 0)
             };
 
             _customHzLabel = new Label
@@ -445,6 +444,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
+                Padding = new Padding(0),
                 Margin = new Padding(0, 3, 0, 3)
             };
             hzPanel.Controls.Add(_hzDropdown);
@@ -457,12 +457,13 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
+                Padding = new Padding(0),
                 Margin = new Padding(0, 3, 0, 3)
             };
-            _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
-            _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
+            _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f), Margin = new Padding(0) };
+            _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f), Margin = new Padding(0) };
 
-            customFlow.Controls.Add(new Label { Text = "W:", Width = 20, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f) });
+            customFlow.Controls.Add(new Label { Text = "W:", Width = 20, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(0) });
             customFlow.Controls.Add(_widthInput);
             customFlow.Controls.Add(new Label { Text = "H:", Width = 24, TextAlign = ContentAlignment.MiddleRight, Font = new Font("Tahoma", 8f), Margin = new Padding(6, 0, 0, 0) });
             customFlow.Controls.Add(_heightInput);
@@ -482,7 +483,6 @@ namespace ResolutionSwitcher.Main
             SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
             var gameGroup = MakeGroup("Game");
-            gameGroup.Padding = new Padding(6, 14, 6, 2);
             var gameLayout = MakeTwoColLayout(3);
             gameLayout.SuspendLayout();
 
@@ -492,7 +492,8 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Tahoma", 8f),
                 Width = 240,
-                Anchor = AnchorStyles.Left | AnchorStyles.Right
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                Margin = new Padding(0)
             };
             gameDropdown.Items.AddRange(new object[] { "Counter-Strike 2", "Valorant", "Other" });
             gameDropdown.SelectedIndex = 0;
@@ -506,6 +507,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
+                Padding = new Padding(0),
                 Margin = new Padding(0, 3, 0, 3)
             };
             gameFlow.Controls.Add(gameDropdown);
@@ -532,7 +534,8 @@ namespace ResolutionSwitcher.Main
                 Text = "Scan Steam Library",
                 AutoSize = true,
                 Padding = new Padding(6, 3, 6, 3),
-                Font = new Font("Tahoma", 8f)
+                Font = new Font("Tahoma", 8f),
+                Margin = new Padding(0, 0, 6, 0)
             };
             scanSteamBtn.Click += (_, _) => MessageBox.Show(
                 "Steam library scanning will be available in the next update.",
@@ -545,7 +548,8 @@ namespace ResolutionSwitcher.Main
                 Text = "  (coming in next update)",
                 AutoSize = true,
                 Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(4, 0, 0, 0)
             };
 
             var steamBtnFlow = new FlowLayoutPanel
@@ -554,6 +558,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
+                Padding = new Padding(0),
                 Margin = new Padding(0, 3, 0, 3)
             };
             steamBtnFlow.Controls.Add(scanSteamBtn);
@@ -681,11 +686,10 @@ namespace ResolutionSwitcher.Main
 
             mainLayout.Controls.Add(actionGroup, 0, 0);
             mainLayout.Controls.Add(profileGroup, 0, 1);
-            mainLayout.Controls.Add(_profileCardPanel, 0, 2);
-            mainLayout.Controls.Add(monitorGroup, 0, 3);
-            mainLayout.Controls.Add(resGroup, 0, 4);
-            mainLayout.Controls.Add(gameGroup, 0, 5);
-            mainLayout.Controls.Add(launchGroup, 0, 6);
+            mainLayout.Controls.Add(monitorGroup, 0, 2);
+            mainLayout.Controls.Add(resGroup, 0, 3);
+            mainLayout.Controls.Add(gameGroup, 0, 4);
+            mainLayout.Controls.Add(launchGroup, 0, 5);
 
             mainLayout.ResumeLayout(false);
             _scrollPanel.Controls.Add(mainLayout);
@@ -711,8 +715,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 3),
-                Padding = new Padding(6, 6, 6, 2),
+                Margin = new Padding(0, 0, 0, 4),
+                Padding = new Padding(6, 16, 6, 3),
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink
