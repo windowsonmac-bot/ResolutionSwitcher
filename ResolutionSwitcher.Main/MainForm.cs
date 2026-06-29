@@ -492,61 +492,56 @@ namespace ResolutionSwitcher.Main
             var gameLayout = MakeTwoColLayout(2);
             gameLayout.SuspendLayout();
 
+            // Replace gameFlow FlowLayoutPanel with a TableLayoutPanel for proper stretching
+            var gamePathLayout = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                RowCount = 1,
+                Dock = DockStyle.Fill,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                CellBorderStyle = TableLayoutPanelCellBorderStyle.None,
+                Padding = new Padding(0),
+                Margin = new Padding(0, 3, 0, 3)
+            };
+            gamePathLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));  // text box takes all space
+            gamePathLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));        // browse button auto-sizes
+            gamePathLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
             _gamePathInput = new TextBox
             {
                 Name = "gamePathInput",
                 Font = new Font("Tahoma", 8f),
                 Dock = DockStyle.Fill,
                 PlaceholderText = "Paste or browse to game .exe path...",
-                Margin = new Padding(0)
+                Margin = new Padding(0, 2, 4, 2)
             };
 
             var browseGameBtn = new Button
             {
                 Text = "Browse...",
-                Width = 70,
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
                 Height = 24,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(4, 0, 0, 0)
+                Margin = new Padding(0, 2, 0, 2)
             };
             browseGameBtn.Click += BrowseGameBtn_Click;
 
             // Wire up path text box change to save to profile (on focus loss to avoid per-keystroke I/O)
-            _gamePathInput.Leave += (s, ev) =>
-            {
-                var path = _gamePathInput.Text.Trim();
-                if (!string.IsNullOrEmpty(path) && File.Exists(path) && _configManager != null)
-                {
-                    var config = _configManager.GetConfig();
-                    var profile = GetActiveProfile(config);
-                    if (profile != null)
-                    {
-                        profile.GameName = Path.GetFileNameWithoutExtension(path);
-                        profile.LaunchPath = path;
-                        _configManager.Save();
-                    }
-                }
-            };
+            _gamePathInput.Leave += (s, ev) => SaveGamePathToProfile(GetSanitizedGamePath());
 
-            var gameInputFlow = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                Dock = DockStyle.Fill,
-                Padding = new Padding(0),
-                Margin = new Padding(0, 3, 0, 3)
-            };
-            gameInputFlow.Controls.Add(_gamePathInput);
-            gameInputFlow.Controls.Add(browseGameBtn);
+            gamePathLayout.Controls.Add(_gamePathInput, 0, 0);
+            gamePathLayout.Controls.Add(browseGameBtn, 1, 0);
 
             var launchMethodDropdown = new ComboBox
             {
                 Name = "launchMethodDropdown",
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Dock = DockStyle.Fill,
+                Width = 160,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 3, 0, 3)
+                Margin = new Padding(0, 3, 0, 3),
+                Anchor = AnchorStyles.Left
             };
             launchMethodDropdown.Items.AddRange(new object[] { "Steam", "Steam (App ID)", "Direct EXE Path", "Custom Location" });
             launchMethodDropdown.SelectedIndex = 0;
@@ -561,7 +556,7 @@ namespace ResolutionSwitcher.Main
             };
 
             gameLayout.Controls.Add(MakeLabel("Game:"), 0, 0);
-            gameLayout.Controls.Add(gameInputFlow, 1, 0);
+            gameLayout.Controls.Add(gamePathLayout, 1, 0);
             gameLayout.Controls.Add(MakeLabel("Launcher:"), 0, 1);
             gameLayout.Controls.Add(launchMethodDropdown, 1, 1);
             gameLayout.ResumeLayout(false);
@@ -1055,12 +1050,15 @@ namespace ResolutionSwitcher.Main
                     return;
                 }
 
+                // Read path directly from the text box first (handles pasted paths that haven't been saved yet)
+                SaveGamePathToProfile(GetSanitizedGamePath());
+
                 var config = _configManager.GetConfig();
                 var profile = GetActiveProfile(config);
 
                 if (profile == null || string.IsNullOrWhiteSpace(profile.LaunchPath))
                 {
-                    AppendStatus("No game configured. Use 'Add...' to select a game executable.");
+                    AppendStatus("No game configured. Paste or browse to a game .exe path.");
                     return;
                 }
 
@@ -1256,6 +1254,22 @@ namespace ResolutionSwitcher.Main
             var idx = _monitorDropdown.SelectedIndex;
             if (idx < 0 || idx >= _detectedMonitors.Count) return null;
             return _detectedMonitors[idx];
+        }
+
+        private string GetSanitizedGamePath()
+            => _gamePathInput?.Text.Trim().Trim('"') ?? string.Empty;
+
+        private void SaveGamePathToProfile(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path) || _configManager == null) return;
+            var config = _configManager.GetConfig();
+            var profile = GetActiveProfile(config);
+            if (profile != null)
+            {
+                profile.GameName = Path.GetFileNameWithoutExtension(path);
+                profile.LaunchPath = path;
+                _configManager.Save();
+            }
         }
 
         private (uint width, uint height, uint hz) GetSelectedResolution()
