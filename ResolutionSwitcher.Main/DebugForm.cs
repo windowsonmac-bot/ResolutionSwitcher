@@ -30,9 +30,9 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "Debug & Logging";
-            Width = 640;
+            Width = 704;
             Height = 500;
-            MinimumSize = new Size(520, 380);
+            MinimumSize = new Size(572, 380);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.Sizable;
             AutoScaleMode = AutoScaleMode.Dpi;

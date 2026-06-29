@@ -279,7 +279,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 3, 0, 3)
             };
             profileFlow.Controls.Add(_profileDropdown);
             profileFlow.Controls.Add(newProfileBtn);
@@ -332,7 +332,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             _monitorDefaultLabel = new Label
             {
@@ -362,7 +362,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             _presetDropdown.Items.AddRange(new object[]
             {
@@ -445,7 +445,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             hzPanel.Controls.Add(_hzDropdown);
             hzPanel.Controls.Add(_customHzInput);
@@ -457,7 +457,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
             _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
@@ -506,7 +506,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             gameFlow.Controls.Add(gameDropdown);
             gameFlow.Controls.Add(addGameBtn);
@@ -517,7 +517,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             launchMethodDropdown.Items.AddRange(new object[] { "Steam", "Steam (App ID)", "Direct EXE Path", "Custom Location" });
             launchMethodDropdown.SelectedIndex = 0;
@@ -554,7 +554,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 0)
+                Margin = new Padding(0, 3, 0, 3)
             };
             steamBtnFlow.Controls.Add(scanSteamBtn);
             steamBtnFlow.Controls.Add(steamComingLabel);
@@ -750,9 +750,8 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 0, 6, 0),
-                AutoSize = false,
-                MinimumSize = new Size(0, 22)
+                Margin = new Padding(0, 3, 6, 3),
+                AutoSize = false
             };
         }
 
