@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -272,6 +273,9 @@ namespace ResolutionSwitcher.Main
 
             var newProfileBtn = new Button { Text = "+ New", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
             var deleteProfileBtn = new Button { Text = "Delete", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
+            newProfileBtn.Click += NewProfileBtn_Click;
+            deleteProfileBtn.Click += DeleteProfileBtn_Click;
+            _profileDropdown.SelectedIndexChanged += ProfileDropdown_SelectedIndexChanged;
 
             var profileFlow = new FlowLayoutPanel
             {
@@ -523,6 +527,15 @@ namespace ResolutionSwitcher.Main
             };
             launchMethodDropdown.Items.AddRange(new object[] { "Steam", "Steam (App ID)", "Direct EXE Path", "Custom Location" });
             launchMethodDropdown.SelectedIndex = 0;
+            launchMethodDropdown.SelectedIndexChanged += (s, ev) =>
+            {
+                if (_configManager == null) return;
+                var config = _configManager.GetConfig();
+                var profile = GetActiveProfile(config);
+                if (profile == null) return;
+                profile.LaunchMethod = launchMethodDropdown.SelectedItem as string ?? "Steam";
+                _configManager.Save();
+            };
 
             gameLayout.Controls.Add(MakeLabel("Game:"), 0, 0);
             gameLayout.Controls.Add(gameFlow, 1, 0);
@@ -623,6 +636,26 @@ namespace ResolutionSwitcher.Main
                 Margin = new Padding(12, 3, 0, 0)
             };
             learnMoreLink.LinkClicked += LearnMoreBtn_LinkClicked;
+            autoRestoreRadio.CheckedChanged += (s, ev) =>
+            {
+                if (!autoRestoreRadio.Checked) return;
+                if (_configManager == null) return;
+                var config = _configManager.GetConfig();
+                var profile = GetActiveProfile(config);
+                if (profile == null) return;
+                profile.LaunchMode = "autoRestore";
+                _configManager.Save();
+            };
+            instantKillRadio.CheckedChanged += (s, ev) =>
+            {
+                if (!instantKillRadio.Checked) return;
+                if (_configManager == null) return;
+                var config = _configManager.GetConfig();
+                var profile = GetActiveProfile(config);
+                if (profile == null) return;
+                profile.LaunchMode = "instantKill";
+                _configManager.Save();
+            };
             instantKillRow.Controls.Add(instantKillRadio);
             instantKillRow.Controls.Add(learnMoreLink);
 
@@ -993,6 +1026,7 @@ namespace ResolutionSwitcher.Main
                 _monitorDefaultLabel.Text = $"Default: {primary.Width} x {primary.Height} @ {primary.RefreshRate} Hz";
 
                 AppendStatus($"Detected {_detectedMonitors.Count} monitor(s).");
+                LoadProfilesIntoDropdown();
                 AppendStatus("Ready.");
                 _logger.LogSuccess("Main application initialized successfully");
             }
@@ -1018,20 +1052,152 @@ namespace ResolutionSwitcher.Main
 
         private void LaunchGameBtn_Click(object? sender, EventArgs e)
         {
-            _logger.LogInfo("Apply and Launch Game clicked");
-            AppendStatus("Launching game...");
+            try
+            {
+                var monitor = GetSelectedMonitor();
+                if (monitor == null)
+                {
+                    AppendStatus("No monitor selected.");
+                    return;
+                }
+
+                var (width, height, hz) = GetSelectedResolution();
+
+                if (_configManager == null)
+                {
+                    AppendStatus("Config not loaded.");
+                    return;
+                }
+
+                var config = _configManager.GetConfig();
+                var profile = GetActiveProfile(config);
+
+                if (profile == null || string.IsNullOrWhiteSpace(profile.LaunchPath))
+                {
+                    AppendStatus("No game configured. Use 'Add...' to select a game executable.");
+                    return;
+                }
+
+                AppendStatus($"Applying {width}x{height}@{hz}Hz...");
+                bool resOk = DisplayManager.ChangeResolution(monitor.DeviceName, width, height, hz);
+                if (!resOk)
+                {
+                    AppendStatus("✗ Failed to apply resolution. Launch cancelled.");
+                    return;
+                }
+                AppendStatus($"✓ Resolution applied: {width}x{height}@{hz}Hz");
+
+                var launchMethod = profile.LaunchMethod switch
+                {
+                    "Steam (App ID)" => GameLauncher.LaunchMethod.SteamAppId,
+                    "Direct EXE Path" => GameLauncher.LaunchMethod.DirectEXE,
+                    "Custom Location" => GameLauncher.LaunchMethod.Custom,
+                    _ => GameLauncher.LaunchMethod.DirectEXE
+                };
+
+                AppendStatus($"Launching {profile.GameName}...");
+                _logger.LogInfo($"Apply and Launch: {width}x{height}@{hz}Hz on {monitor.DeviceName}, game: {profile.LaunchPath}");
+                int pid = GameLauncher.LaunchGame(launchMethod, profile.LaunchPath);
+
+                if (pid > 0)
+                {
+                    AppendStatus($"✓ Game launched (PID: {pid})");
+                    SaveCurrentProfileSettings();
+                }
+                else
+                {
+                    AppendStatus("✗ Game launch failed.");
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                AppendStatus($"✗ {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                AppendStatus($"✗ Error: {ex.Message}");
+                _logger.LogError("LaunchGame error", ex);
+            }
         }
 
         private void ApplyOnlyBtn_Click(object? sender, EventArgs e)
         {
-            _logger.LogInfo("Apply Only clicked");
-            AppendStatus("Applying resolution...");
+            try
+            {
+                var monitor = GetSelectedMonitor();
+                if (monitor == null)
+                {
+                    AppendStatus("No monitor selected.");
+                    return;
+                }
+
+                var (width, height, hz) = GetSelectedResolution();
+                AppendStatus($"Applying {width}x{height}@{hz}Hz on {monitor.FriendlyName}...");
+                _logger.LogInfo($"Apply Only: {width}x{height}@{hz}Hz on {monitor.DeviceName}");
+
+                bool success = DisplayManager.ChangeResolution(monitor.DeviceName, width, height, hz);
+                if (success)
+                {
+                    AppendStatus($"✓ Resolution applied: {width}x{height}@{hz}Hz");
+                    SaveCurrentProfileSettings();
+                }
+                else
+                {
+                    AppendStatus("✗ Failed to apply resolution. Check that the resolution is supported by your monitor.");
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                AppendStatus($"✗ {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                AppendStatus($"✗ Error: {ex.Message}");
+                _logger.LogError("ApplyOnly error", ex);
+            }
         }
 
         private void ResetBtn_Click(object? sender, EventArgs e)
         {
-            _logger.LogInfo("Reset clicked");
-            AppendStatus("Resetting to default resolution...");
+            try
+            {
+                var monitor = GetSelectedMonitor();
+                if (monitor == null)
+                {
+                    AppendStatus("No monitor selected.");
+                    return;
+                }
+
+                if (_configManager == null)
+                {
+                    AppendStatus("Config not loaded.");
+                    return;
+                }
+
+                var config = _configManager.GetConfig();
+                var monitorConfig = config.Monitors.FirstOrDefault(m => m.DeviceName == monitor.DeviceName);
+
+                if (monitorConfig == null)
+                {
+                    AppendStatus("No saved default resolution for this monitor.");
+                    return;
+                }
+
+                var def = monitorConfig.DefaultResolution;
+                AppendStatus($"Resetting to {def.Width}x{def.Height}@{def.RefreshRate}Hz...");
+                _logger.LogInfo($"Reset: {def.Width}x{def.Height}@{def.RefreshRate}Hz on {monitor.DeviceName}");
+
+                bool success = DisplayManager.ChangeResolution(monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+                if (success)
+                    AppendStatus($"✓ Reset to default: {def.Width}x{def.Height}@{def.RefreshRate}Hz");
+                else
+                    AppendStatus("✗ Failed to reset resolution.");
+            }
+            catch (Exception ex)
+            {
+                AppendStatus($"✗ Error: {ex.Message}");
+                _logger.LogError("Reset error", ex);
+            }
         }
 
         private void BrowseGameBtn_Click(object? sender, EventArgs e)
@@ -1045,8 +1211,35 @@ namespace ResolutionSwitcher.Main
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                AppendStatus($"Game selected: {openFileDialog.FileName}");
-                _logger.LogInfo($"Game selected: {openFileDialog.FileName}");
+                var path = openFileDialog.FileName;
+                var gameName = Path.GetFileNameWithoutExtension(path);
+
+                var gameDropdown = _scrollPanel.Controls.Find("gameDropdown", true).FirstOrDefault() as ComboBox;
+                if (gameDropdown != null)
+                {
+                    if (!gameDropdown.Items.Contains(gameName))
+                        gameDropdown.Items.Add(gameName);
+                    gameDropdown.SelectedItem = gameName;
+                }
+
+                if (_configManager != null)
+                {
+                    var config = _configManager.GetConfig();
+                    var profile = GetActiveProfile(config);
+                    if (profile != null)
+                    {
+                        profile.GameName = gameName;
+                        profile.LaunchPath = path;
+
+                        var launchMethodDropdown = _scrollPanel.Controls.Find("launchMethodDropdown", true).FirstOrDefault() as ComboBox;
+                        profile.LaunchMethod = launchMethodDropdown?.SelectedItem as string ?? "Direct EXE Path";
+
+                        _configManager.Save();
+                    }
+                }
+
+                AppendStatus($"✓ Game set: {gameName}");
+                _logger.LogInfo($"Game selected: {path}");
             }
         }
 
@@ -1076,6 +1269,211 @@ namespace ResolutionSwitcher.Main
             _logger.LogInfo("About clicked");
             using var aboutForm = new AboutForm();
             aboutForm.ShowDialog(this);
+        }
+
+        private DisplayManager.MonitorInfo? GetSelectedMonitor()
+        {
+            var idx = _monitorDropdown.SelectedIndex;
+            if (idx < 0 || idx >= _detectedMonitors.Count) return null;
+            return _detectedMonitors[idx];
+        }
+
+        private (uint width, uint height, uint hz) GetSelectedResolution()
+        {
+            uint width = 0, height = 0, hz = 60;
+
+            if (!uint.TryParse(_widthInput.Text.Trim(), out width) || width == 0)
+                throw new InvalidOperationException("Width must be a positive number.");
+            if (!uint.TryParse(_heightInput.Text.Trim(), out height) || height == 0)
+                throw new InvalidOperationException("Height must be a positive number.");
+
+            var hzText = _hzDropdown.SelectedItem as string;
+            if (hzText == "Custom...")
+            {
+                if (!uint.TryParse(_customHzInput.Text.Trim(), out hz) || hz == 0)
+                    throw new InvalidOperationException("Custom refresh rate must be a positive number.");
+            }
+            else
+            {
+                if (!uint.TryParse(hzText, out hz) || hz == 0)
+                    hz = 60;
+            }
+
+            return (width, height, hz);
+        }
+
+        private ConfigManager.GameProfile? GetActiveProfile(ConfigManager.Config config)
+        {
+            var name = _profileDropdown.SelectedItem as string;
+            if (string.IsNullOrEmpty(name)) return null;
+            return config.Profiles.FirstOrDefault(p => p.Name == name);
+        }
+
+        private void LoadProfilesIntoDropdown()
+        {
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+
+            _profileDropdown.SelectedIndexChanged -= ProfileDropdown_SelectedIndexChanged;
+            _profileDropdown.Items.Clear();
+            foreach (var profile in config.Profiles)
+            {
+                _profileDropdown.Items.Add(profile.Name);
+            }
+
+            if (_profileDropdown.Items.Count == 0)
+            {
+                _profileDropdown.Items.AddRange(new object[] { "Gaming", "Streaming", "Productivity" });
+                foreach (string name in new[] { "Gaming", "Streaming", "Productivity" })
+                {
+                    if (!config.Profiles.Any(p => p.Name == name))
+                        config.Profiles.Add(new ConfigManager.GameProfile { Name = name });
+                }
+                _configManager.Save();
+            }
+
+            if (_profileDropdown.Items.Count > 0)
+                _profileDropdown.SelectedIndex = 0;
+
+            _profileDropdown.SelectedIndexChanged += ProfileDropdown_SelectedIndexChanged;
+        }
+
+        private void SaveCurrentProfileSettings()
+        {
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            var profile = GetActiveProfile(config);
+            if (profile == null) return;
+
+            var monitor = GetSelectedMonitor();
+            if (monitor != null)
+                profile.TargetMonitorId = monitor.Id;
+
+            try
+            {
+                var (width, height, hz) = GetSelectedResolution();
+                profile.TargetResolution = new ConfigManager.ResolutionConfig
+                {
+                    Width = width,
+                    Height = height,
+                    RefreshRate = hz
+                };
+            }
+            catch (InvalidOperationException) { /* ignore parse errors during save */ }
+            catch (Exception ex) { _logger.LogError("SaveCurrentProfileSettings error", ex); }
+
+            _configManager.Save();
+        }
+
+        private void NewProfileBtn_Click(object? sender, EventArgs e)
+        {
+            using var inputForm = new Form
+            {
+                Text = "New Profile",
+                Width = 320,
+                Height = 130,
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                Font = new Font("Tahoma", 8f)
+            };
+            var lbl = new Label { Text = "Profile name:", Left = 12, Top = 14, Width = 90, TextAlign = ContentAlignment.MiddleLeft };
+            var txt = new TextBox { Left = 106, Top = 12, Width = 180, Text = "My Profile" };
+            var okBtn = new Button { Text = "OK", Left = 130, Top = 50, Width = 72, Height = 26, DialogResult = DialogResult.OK };
+            var cancelBtn = new Button { Text = "Cancel", Left = 210, Top = 50, Width = 72, Height = 26, DialogResult = DialogResult.Cancel };
+            inputForm.Controls.AddRange(new Control[] { lbl, txt, okBtn, cancelBtn });
+            inputForm.AcceptButton = okBtn;
+            inputForm.CancelButton = cancelBtn;
+
+            if (inputForm.ShowDialog(this) != DialogResult.OK) return;
+
+            var name = txt.Text.Trim();
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+
+            if (config.Profiles.Any(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                AppendStatus($"Profile '{name}' already exists.");
+                return;
+            }
+
+            config.Profiles.Add(new ConfigManager.GameProfile { Name = name });
+            _configManager.Save();
+
+            _profileDropdown.Items.Add(name);
+            _profileDropdown.SelectedItem = name;
+            AppendStatus($"✓ Profile '{name}' created.");
+        }
+
+        private void DeleteProfileBtn_Click(object? sender, EventArgs e)
+        {
+            var name = _profileDropdown.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            var result = MessageBox.Show($"Delete profile '{name}'?", "Confirm Delete",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result != DialogResult.Yes) return;
+
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            var profile = config.Profiles.FirstOrDefault(p => p.Name == name);
+            if (profile != null) config.Profiles.Remove(profile);
+            _configManager.Save();
+
+            _profileDropdown.Items.Remove(name);
+            if (_profileDropdown.Items.Count > 0)
+                _profileDropdown.SelectedIndex = 0;
+
+            AppendStatus($"Profile '{name}' deleted.");
+        }
+
+        private void ProfileDropdown_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            var profile = GetActiveProfile(config);
+            if (profile == null) return;
+
+            if (profile.TargetResolution != null && profile.TargetResolution.Width > 0)
+            {
+                _widthInput.Text = profile.TargetResolution.Width.ToString();
+                _heightInput.Text = profile.TargetResolution.Height.ToString();
+
+                var hzStr = profile.TargetResolution.RefreshRate.ToString();
+                if (_hzDropdown.Items.Contains(hzStr))
+                    _hzDropdown.SelectedItem = hzStr;
+            }
+
+            if (!string.IsNullOrEmpty(profile.GameName))
+            {
+                var gameDropdown = _scrollPanel.Controls.Find("gameDropdown", true).FirstOrDefault() as ComboBox;
+                if (gameDropdown != null)
+                {
+                    if (!gameDropdown.Items.Contains(profile.GameName))
+                        gameDropdown.Items.Add(profile.GameName);
+                    gameDropdown.SelectedItem = profile.GameName;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(profile.LaunchMethod))
+            {
+                var launchMethodDropdown = _scrollPanel.Controls.Find("launchMethodDropdown", true).FirstOrDefault() as ComboBox;
+                if (launchMethodDropdown != null && launchMethodDropdown.Items.Contains(profile.LaunchMethod))
+                    launchMethodDropdown.SelectedItem = profile.LaunchMethod;
+            }
+
+            var autoRestoreRadio = _scrollPanel.Controls.Find("autoRestoreRadio", true).FirstOrDefault() as RadioButton;
+            var instantKillRadio = _scrollPanel.Controls.Find("instantKillRadio", true).FirstOrDefault() as RadioButton;
+            if (autoRestoreRadio != null && instantKillRadio != null)
+            {
+                if (profile.LaunchMode == "instantKill")
+                    instantKillRadio.Checked = true;
+                else
+                    autoRestoreRadio.Checked = true;
+            }
         }
 
         private void LearnMoreBtn_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
