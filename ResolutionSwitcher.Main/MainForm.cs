@@ -42,6 +42,8 @@ namespace ResolutionSwitcher.Main
         private Label _customHzLabel = null!;
         private TextBox _widthInput = null!;
         private TextBox _heightInput = null!;
+        private bool _suppressPresetSync = false;
+        private TextBox _gamePathInput = null!;
 
         public MainForm()
         {
@@ -57,7 +59,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(820, 880);
+            ClientSize = new Size(820, 860);
             MinimumSize = new Size(630, 700);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
@@ -171,8 +173,8 @@ namespace ResolutionSwitcher.Main
             _statusPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 88,
-                MinimumSize = new Size(0, 88),
+                Height = 176,
+                MinimumSize = new Size(0, 176),
                 BorderStyle = BorderStyle.Fixed3D,
                 Padding = new Padding(8, 6, 8, 8)
             };
@@ -487,25 +489,46 @@ namespace ResolutionSwitcher.Main
             SyncCustomResolutionFromPreset(_presetDropdown.SelectedItem as string);
 
             var gameGroup = MakeGroup("Game");
-            var gameLayout = MakeTwoColLayout(3);
+            var gameLayout = MakeTwoColLayout(2);
             gameLayout.SuspendLayout();
 
-            var gameDropdown = new ComboBox
+            _gamePathInput = new TextBox
             {
-                Name = "gameDropdown",
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                Name = "gamePathInput",
                 Font = new Font("Tahoma", 8f),
-                Width = 240,
-                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                Dock = DockStyle.Fill,
+                PlaceholderText = "Paste or browse to game .exe path...",
                 Margin = new Padding(0)
             };
-            gameDropdown.Items.AddRange(new object[] { "Counter-Strike 2", "Valorant", "Other" });
-            gameDropdown.SelectedIndex = 0;
 
-            var addGameBtn = new Button { Text = "Add...", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
-            addGameBtn.Click += BrowseGameBtn_Click;
+            var browseGameBtn = new Button
+            {
+                Text = "Browse...",
+                Width = 70,
+                Height = 24,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 0, 0, 0)
+            };
+            browseGameBtn.Click += BrowseGameBtn_Click;
 
-            var gameFlow = new FlowLayoutPanel
+            // Wire up path text box change to save to profile (on focus loss to avoid per-keystroke I/O)
+            _gamePathInput.Leave += (s, ev) =>
+            {
+                var path = _gamePathInput.Text.Trim();
+                if (!string.IsNullOrEmpty(path) && File.Exists(path) && _configManager != null)
+                {
+                    var config = _configManager.GetConfig();
+                    var profile = GetActiveProfile(config);
+                    if (profile != null)
+                    {
+                        profile.GameName = Path.GetFileNameWithoutExtension(path);
+                        profile.LaunchPath = path;
+                        _configManager.Save();
+                    }
+                }
+            };
+
+            var gameInputFlow = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
@@ -514,8 +537,8 @@ namespace ResolutionSwitcher.Main
                 Padding = new Padding(0),
                 Margin = new Padding(0, 3, 0, 3)
             };
-            gameFlow.Controls.Add(gameDropdown);
-            gameFlow.Controls.Add(addGameBtn);
+            gameInputFlow.Controls.Add(_gamePathInput);
+            gameInputFlow.Controls.Add(browseGameBtn);
 
             var launchMethodDropdown = new ComboBox
             {
@@ -538,47 +561,9 @@ namespace ResolutionSwitcher.Main
             };
 
             gameLayout.Controls.Add(MakeLabel("Game:"), 0, 0);
-            gameLayout.Controls.Add(gameFlow, 1, 0);
+            gameLayout.Controls.Add(gameInputFlow, 1, 0);
             gameLayout.Controls.Add(MakeLabel("Launcher:"), 0, 1);
             gameLayout.Controls.Add(launchMethodDropdown, 1, 1);
-
-            var scanSteamBtn = new Button
-            {
-                Text = "Scan Steam Library",
-                AutoSize = true,
-                Padding = new Padding(6, 3, 6, 3),
-                Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 0, 6, 0)
-            };
-            scanSteamBtn.Click += (_, _) => MessageBox.Show(
-                "Steam library scanning will be available in the next update.",
-                "Coming Soon",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-
-            var steamComingLabel = new Label
-            {
-                Text = "  (coming in next update)",
-                AutoSize = true,
-                Font = new Font("Tahoma", 7.5f, FontStyle.Italic),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Margin = new Padding(4, 0, 0, 0)
-            };
-
-            var steamBtnFlow = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                Dock = DockStyle.Fill,
-                Padding = new Padding(0),
-                Margin = new Padding(0, 3, 0, 3)
-            };
-            steamBtnFlow.Controls.Add(scanSteamBtn);
-            steamBtnFlow.Controls.Add(steamComingLabel);
-
-            gameLayout.Controls.Add(MakeLabel("Steam:"), 0, 2);
-            gameLayout.Controls.Add(steamBtnFlow, 1, 2);
             gameLayout.ResumeLayout(false);
             gameGroup.Controls.Add(gameLayout);
 
@@ -836,6 +821,7 @@ namespace ResolutionSwitcher.Main
 
         private void SyncCustomResolutionFromPreset(string? selectedItem)
         {
+            if (_suppressPresetSync) return;
             if (string.IsNullOrWhiteSpace(selectedItem)
                 || selectedItem.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
             {
@@ -1214,13 +1200,7 @@ namespace ResolutionSwitcher.Main
                 var path = openFileDialog.FileName;
                 var gameName = Path.GetFileNameWithoutExtension(path);
 
-                var gameDropdown = _scrollPanel.Controls.Find("gameDropdown", true).FirstOrDefault() as ComboBox;
-                if (gameDropdown != null)
-                {
-                    if (!gameDropdown.Items.Contains(gameName))
-                        gameDropdown.Items.Add(gameName);
-                    gameDropdown.SelectedItem = gameName;
-                }
+                _gamePathInput.Text = path;
 
                 if (_configManager != null)
                 {
@@ -1282,16 +1262,44 @@ namespace ResolutionSwitcher.Main
         {
             uint width = 0, height = 0, hz = 60;
 
-            if (!uint.TryParse(_widthInput.Text.Trim(), out width) || width == 0)
-                throw new InvalidOperationException("Width must be a positive number.");
-            if (!uint.TryParse(_heightInput.Text.Trim(), out height) || height == 0)
-                throw new InvalidOperationException("Height must be a positive number.");
+            var wText = _widthInput.Text.Trim();
+            var hText = _heightInput.Text.Trim();
+
+            if (string.IsNullOrEmpty(wText) || string.IsNullOrEmpty(hText))
+            {
+                // Fall back to selected preset
+                if (_presetDropdown.SelectedItem is string presetStr &&
+                    !presetStr.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal))
+                {
+                    var token = presetStr
+                        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                        .FirstOrDefault(t => t.Contains('x'));
+                    if (token != null)
+                    {
+                        var parts = token.Split('x');
+                        if (parts.Length == 2)
+                        {
+                            uint.TryParse(parts[0], out width);
+                            uint.TryParse(parts[1], out height);
+                        }
+                    }
+                }
+                if (width == 0 || height == 0)
+                    throw new InvalidOperationException("No resolution selected. Choose a preset or enter W/H values.");
+            }
+            else
+            {
+                if (!uint.TryParse(wText, out width) || width == 0)
+                    throw new InvalidOperationException("Invalid width value.");
+                if (!uint.TryParse(hText, out height) || height == 0)
+                    throw new InvalidOperationException("Invalid height value.");
+            }
 
             var hzText = _hzDropdown.SelectedItem as string;
             if (hzText == "Custom...")
             {
                 if (!uint.TryParse(_customHzInput.Text.Trim(), out hz) || hz == 0)
-                    throw new InvalidOperationException("Custom refresh rate must be a positive number.");
+                    throw new InvalidOperationException("Invalid custom Hz value.");
             }
             else
             {
@@ -1332,8 +1340,16 @@ namespace ResolutionSwitcher.Main
                 _configManager.Save();
             }
 
-            if (_profileDropdown.Items.Count > 0)
-                _profileDropdown.SelectedIndex = 0;
+            _suppressPresetSync = true;
+            try
+            {
+                if (_profileDropdown.Items.Count > 0)
+                    _profileDropdown.SelectedIndex = 0;
+            }
+            finally
+            {
+                _suppressPresetSync = false;
+            }
 
             _profileDropdown.SelectedIndexChanged += ProfileDropdown_SelectedIndexChanged;
         }
@@ -1370,18 +1386,18 @@ namespace ResolutionSwitcher.Main
             using var inputForm = new Form
             {
                 Text = "New Profile",
-                Width = 320,
-                Height = 130,
+                Width = 420,
+                Height = 210,
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
                 MinimizeBox = false,
-                Font = new Font("Tahoma", 8f)
+                Font = new Font("Tahoma", 10f)
             };
-            var lbl = new Label { Text = "Profile name:", Left = 12, Top = 14, Width = 90, TextAlign = ContentAlignment.MiddleLeft };
-            var txt = new TextBox { Left = 106, Top = 12, Width = 180, Text = "My Profile" };
-            var okBtn = new Button { Text = "OK", Left = 130, Top = 50, Width = 72, Height = 26, DialogResult = DialogResult.OK };
-            var cancelBtn = new Button { Text = "Cancel", Left = 210, Top = 50, Width = 72, Height = 26, DialogResult = DialogResult.Cancel };
+            var lbl = new Label { Text = "Profile name:", Left = 16, Top = 24, Width = 116, Height = 28, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Tahoma", 10f) };
+            var txt = new TextBox { Left = 136, Top = 22, Width = 248, Height = 28, Font = new Font("Tahoma", 10f), Text = "My Profile" };
+            var okBtn = new Button { Text = "OK", Left = 162, Top = 90, Width = 100, Height = 38, DialogResult = DialogResult.OK, Font = new Font("Tahoma", 10f) };
+            var cancelBtn = new Button { Text = "Cancel", Left = 272, Top = 90, Width = 100, Height = 38, DialogResult = DialogResult.Cancel, Font = new Font("Tahoma", 10f) };
             inputForm.Controls.AddRange(new Control[] { lbl, txt, okBtn, cancelBtn });
             inputForm.AcceptButton = okBtn;
             inputForm.CancelButton = cancelBtn;
@@ -1437,42 +1453,57 @@ namespace ResolutionSwitcher.Main
             var profile = GetActiveProfile(config);
             if (profile == null) return;
 
-            if (profile.TargetResolution != null && profile.TargetResolution.Width > 0)
+            _suppressPresetSync = true;
+            try
             {
-                _widthInput.Text = profile.TargetResolution.Width.ToString();
-                _heightInput.Text = profile.TargetResolution.Height.ToString();
-
-                var hzStr = profile.TargetResolution.RefreshRate.ToString();
-                if (_hzDropdown.Items.Contains(hzStr))
-                    _hzDropdown.SelectedItem = hzStr;
-            }
-
-            if (!string.IsNullOrEmpty(profile.GameName))
-            {
-                var gameDropdown = _scrollPanel.Controls.Find("gameDropdown", true).FirstOrDefault() as ComboBox;
-                if (gameDropdown != null)
+                if (profile.TargetResolution != null && profile.TargetResolution.Width > 0)
                 {
-                    if (!gameDropdown.Items.Contains(profile.GameName))
-                        gameDropdown.Items.Add(profile.GameName);
-                    gameDropdown.SelectedItem = profile.GameName;
+                    _widthInput.Text = profile.TargetResolution.Width.ToString();
+                    _heightInput.Text = profile.TargetResolution.Height.ToString();
+                    var hzStr = profile.TargetResolution.RefreshRate.ToString();
+                    if (_hzDropdown.Items.Contains(hzStr))
+                        _hzDropdown.SelectedItem = hzStr;
+                }
+                else
+                {
+                    // No saved resolution — clear W/H so user starts fresh
+                    _widthInput.Text = "";
+                    _heightInput.Text = "";
+                }
+
+                if (!string.IsNullOrEmpty(profile.LaunchPath))
+                {
+                    _gamePathInput.Text = profile.LaunchPath;
+                }
+                else if (!string.IsNullOrEmpty(profile.GameName))
+                {
+                    _gamePathInput.Text = profile.GameName;
+                }
+                else
+                {
+                    _gamePathInput.Text = "";
+                }
+
+                if (!string.IsNullOrEmpty(profile.LaunchMethod))
+                {
+                    var launchMethodDropdown = _scrollPanel.Controls.Find("launchMethodDropdown", true).FirstOrDefault() as ComboBox;
+                    if (launchMethodDropdown != null && launchMethodDropdown.Items.Contains(profile.LaunchMethod))
+                        launchMethodDropdown.SelectedItem = profile.LaunchMethod;
+                }
+
+                var autoRestoreRadio = _scrollPanel.Controls.Find("autoRestoreRadio", true).FirstOrDefault() as RadioButton;
+                var instantKillRadio = _scrollPanel.Controls.Find("instantKillRadio", true).FirstOrDefault() as RadioButton;
+                if (autoRestoreRadio != null && instantKillRadio != null)
+                {
+                    if (profile.LaunchMode == "instantKill")
+                        instantKillRadio.Checked = true;
+                    else
+                        autoRestoreRadio.Checked = true;
                 }
             }
-
-            if (!string.IsNullOrEmpty(profile.LaunchMethod))
+            finally
             {
-                var launchMethodDropdown = _scrollPanel.Controls.Find("launchMethodDropdown", true).FirstOrDefault() as ComboBox;
-                if (launchMethodDropdown != null && launchMethodDropdown.Items.Contains(profile.LaunchMethod))
-                    launchMethodDropdown.SelectedItem = profile.LaunchMethod;
-            }
-
-            var autoRestoreRadio = _scrollPanel.Controls.Find("autoRestoreRadio", true).FirstOrDefault() as RadioButton;
-            var instantKillRadio = _scrollPanel.Controls.Find("instantKillRadio", true).FirstOrDefault() as RadioButton;
-            if (autoRestoreRadio != null && instantKillRadio != null)
-            {
-                if (profile.LaunchMode == "instantKill")
-                    instantKillRadio.Checked = true;
-                else
-                    autoRestoreRadio.Checked = true;
+                _suppressPresetSync = false;
             }
         }
 
