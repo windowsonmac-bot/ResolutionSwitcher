@@ -511,8 +511,8 @@ namespace ResolutionSwitcher.Main
             };
             browseGameBtn.Click += BrowseGameBtn_Click;
 
-            // Wire up path text box change to save to profile
-            _gamePathInput.TextChanged += (s, ev) =>
+            // Wire up path text box change to save to profile (on focus loss to avoid per-keystroke I/O)
+            _gamePathInput.Leave += (s, ev) =>
             {
                 var path = _gamePathInput.Text.Trim();
                 if (!string.IsNullOrEmpty(path) && File.Exists(path) && _configManager != null)
