@@ -56,8 +56,8 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
-            ClientSize = new Size(780, 760);
-            MinimumSize = new Size(600, 580);
+            ClientSize = new Size(780, 800);
+            MinimumSize = new Size(600, 620);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -76,9 +76,9 @@ namespace ResolutionSwitcher.Main
 
             _titleLabel = new Label
             {
-                Text = "Display Resolution Manager",
+                Text = "Resolution Manager",
                 Dock = DockStyle.Fill,
-                Font = new Font("Tahoma", 11f, FontStyle.Bold),
+                Font = new Font("Tahoma", 9f, FontStyle.Bold),
                 ForeColor = Color.White,
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent,
@@ -293,17 +293,17 @@ namespace ResolutionSwitcher.Main
             {
                 Name = "_profileCardPanel",
                 BorderStyle = BorderStyle.Fixed3D,
-                Height = 44,
+                Height = 36,
                 Dock = DockStyle.Top,
-                Margin = new Padding(0, 0, 0, 8),
-                Padding = new Padding(8, 6, 8, 4)
+                Margin = new Padding(0, 0, 0, 4),
+                Padding = new Padding(6, 4, 6, 2)
             };
 
             _profileCardLine1 = new Label
             {
                 Name = "_profileCardLine1",
                 Dock = DockStyle.Top,
-                Height = 20,
+                Height = 16,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Font = new Font("Tahoma", 7.5f),
                 Text = "Monitor: Not set   Resolution: Not set   Refresh: Not set Hz"
@@ -330,7 +330,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             _monitorDefaultLabel = new Label
             {
@@ -338,7 +338,7 @@ namespace ResolutionSwitcher.Main
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 7.5f),
                 TextAlign = ContentAlignment.MiddleLeft,
-                Margin = new Padding(0, 1, 0, 3)
+                Margin = new Padding(0, 0, 0, 2)
             };
 
             monitorLayout.Controls.Add(MakeLabel("Monitor:"), 0, 0);
@@ -358,7 +358,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             _presetDropdown.Items.AddRange(new object[]
             {
@@ -441,7 +441,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             hzPanel.Controls.Add(_hzDropdown);
             hzPanel.Controls.Add(_customHzInput);
@@ -453,7 +453,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             _widthInput = new TextBox { Name = "widthInput", Text = "960", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
             _heightInput = new TextBox { Name = "heightInput", Text = "720", Width = 60, BorderStyle = BorderStyle.Fixed3D, Font = new Font("Tahoma", 8f) };
@@ -501,7 +501,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             gameFlow.Controls.Add(gameDropdown);
             gameFlow.Controls.Add(addGameBtn);
@@ -512,7 +512,7 @@ namespace ResolutionSwitcher.Main
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             launchMethodDropdown.Items.AddRange(new object[] { "Steam", "Steam (App ID)", "Direct EXE Path", "Custom Location" });
             launchMethodDropdown.SelectedIndex = 0;
@@ -549,7 +549,7 @@ namespace ResolutionSwitcher.Main
                 WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 1, 0, 1)
             };
             steamBtnFlow.Controls.Add(scanSteamBtn);
             steamBtnFlow.Controls.Add(steamComingLabel);
@@ -706,8 +706,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 4),
-                Padding = new Padding(6, 8, 6, 4),
+                Margin = new Padding(0, 0, 0, 3),
+                Padding = new Padding(6, 6, 6, 2),
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink
@@ -745,7 +745,7 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 2, 6, 2),
+                Margin = new Padding(0, 1, 6, 1),
                 AutoSize = false
             };
         }
