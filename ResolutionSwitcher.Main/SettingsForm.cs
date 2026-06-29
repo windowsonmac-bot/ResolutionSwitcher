@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace ResolutionSwitcher.Main
 {
@@ -127,6 +128,7 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Margin = new Padding(0, 0, 0, 4)
             };
+            _startupCheckBox.Checked = GetStartupEnabled();
             _startupCheckBox.CheckedChanged += StartupCheckBox_CheckedChanged;
 
             _startupHintLabel = new Label
@@ -439,23 +441,46 @@ namespace ResolutionSwitcher.Main
             return tab;
         }
 
+        private static bool GetStartupEnabled()
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", false);
+                return key?.GetValue("ResolutionSwitcher") != null;
+            }
+            catch { return false; }
+        }
+
+        private static void SetStartupEnabled(bool enabled)
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+                if (key == null) return;
+                if (enabled)
+                {
+                    var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                    key.SetValue("ResolutionSwitcher", $"\"{exePath}\"");
+                }
+                else
+                {
+                    key.DeleteValue("ResolutionSwitcher", false);
+                }
+            }
+            catch { }
+        }
+
         private void StartupCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
-            if (!_startupCheckBox.Checked)
+            SetStartupEnabled(_startupCheckBox.Checked);
+            // Show info message only when enabling for the first time
+            if (_startupCheckBox.Checked)
             {
-                return;
-            }
-
-            var result = MessageBox.Show(
-                StartupMessage,
-                "Startup on Boot",
-                MessageBoxButtons.OKCancel,
-                MessageBoxIcon.Information,
-                MessageBoxDefaultButton.Button2);
-
-            if (result == DialogResult.Cancel)
-            {
-                _startupCheckBox.Checked = false;
+                MessageBox.Show(
+                    "ResolutionSwitcher will now launch automatically when Windows starts.\n\nA registry entry has been added to:\nHKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    "Startup Enabled",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
             }
         }
 

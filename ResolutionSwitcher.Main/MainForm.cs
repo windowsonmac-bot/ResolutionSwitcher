@@ -44,6 +44,21 @@ namespace ResolutionSwitcher.Main
         private TextBox _heightInput = null!;
         private bool _suppressPresetSync = false;
         private TextBox _gamePathInput = null!;
+        private NotifyIcon _trayIcon = null!;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+        private const int HOTKEY_RESET = 1;
+        private const int HOTKEY_LAUNCH = 2;
+        private const int HOTKEY_EMERGENCY = 3;
+        private const uint MOD_CONTROL = 0x0002;
+        private const uint MOD_ALT = 0x0001;
+        private const uint VK_R = 0x52;
+        private const uint VK_L = 0x4C;
+        private const uint VK_F12 = 0x7B;
 
         public MainForm()
         {
@@ -495,7 +510,7 @@ namespace ResolutionSwitcher.Main
             // Replace gameFlow FlowLayoutPanel with a TableLayoutPanel for proper stretching
             var gamePathLayout = new TableLayoutPanel
             {
-                ColumnCount = 2,
+                ColumnCount = 3,
                 RowCount = 1,
                 Dock = DockStyle.Fill,
                 AutoSize = true,
@@ -506,6 +521,7 @@ namespace ResolutionSwitcher.Main
             };
             gamePathLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));  // text box takes all space
             gamePathLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));        // browse button auto-sizes
+            gamePathLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));        // steam button auto-sizes
             gamePathLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             _gamePathInput = new TextBox
@@ -528,11 +544,23 @@ namespace ResolutionSwitcher.Main
             };
             browseGameBtn.Click += BrowseGameBtn_Click;
 
+            var scanSteamBtn = new Button
+            {
+                Text = "Steam...",
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
+                Height = 24,
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(4, 2, 0, 2)
+            };
+            scanSteamBtn.Click += ScanSteamBtn_Click;
+
             // Wire up path text box change to save to profile (on focus loss to avoid per-keystroke I/O)
             _gamePathInput.Leave += (s, ev) => SaveGamePathToProfile(GetSanitizedGamePath());
 
             gamePathLayout.Controls.Add(_gamePathInput, 0, 0);
             gamePathLayout.Controls.Add(browseGameBtn, 1, 0);
+            gamePathLayout.Controls.Add(scanSteamBtn, 2, 0);
 
             var launchMethodDropdown = new ComboBox
             {
@@ -712,14 +740,201 @@ namespace ResolutionSwitcher.Main
             Controls.Add(_statusPanel);
             Controls.Add(_titlePanel);
 
+            _trayIcon = new NotifyIcon
+            {
+                Text = "ResolutionSwitcher",
+                Icon = SystemIcons.Application,
+                Visible = false
+            };
+
+            var trayMenu = new ContextMenuStrip();
+            trayMenu.Items.Add("Show", null, (s, ev) => RestoreFromTray());
+            trayMenu.Items.Add("Reset Resolution", null, (s, ev) => ResetBtn_Click(null, EventArgs.Empty));
+            trayMenu.Items.Add(new ToolStripSeparator());
+            trayMenu.Items.Add("Exit", null, (s, ev) => Application.Exit());
+            _trayIcon.ContextMenuStrip = trayMenu;
+            _trayIcon.DoubleClick += (s, ev) => RestoreFromTray();
+
             ResumeLayout(false);
             PerformLayout();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            UnregisterHotKey(Handle, HOTKEY_RESET);
+            UnregisterHotKey(Handle, HOTKEY_LAUNCH);
+            UnregisterHotKey(Handle, HOTKEY_EMERGENCY);
             ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+            _trayIcon?.Dispose();
             base.OnFormClosed(e);
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            RegisterHotKey(Handle, HOTKEY_RESET, MOD_CONTROL | MOD_ALT, VK_R);
+            RegisterHotKey(Handle, HOTKEY_LAUNCH, MOD_CONTROL | MOD_ALT, VK_L);
+            RegisterHotKey(Handle, HOTKEY_EMERGENCY, MOD_CONTROL | MOD_ALT, VK_F12);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_HOTKEY = 0x0312;
+            if (m.Msg == WM_HOTKEY)
+            {
+                switch (m.WParam.ToInt32())
+                {
+                    case HOTKEY_RESET:
+                        ResetBtn_Click(null, EventArgs.Empty);
+                        break;
+                    case HOTKEY_LAUNCH:
+                        LaunchGameBtn_Click(null, EventArgs.Empty);
+                        break;
+                    case HOTKEY_EMERGENCY:
+                        ResetBtn_Click(null, EventArgs.Empty);
+                        AppendStatus("⚡ Emergency Reset triggered via hotkey");
+                        break;
+                }
+            }
+            base.WndProc(ref m);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (WindowState == FormWindowState.Minimized)
+            {
+                Hide();
+                _trayIcon.Visible = true;
+                _trayIcon.ShowBalloonTip(1500, "ResolutionSwitcher", "Running in background. Double-click to restore.", ToolTipIcon.Info);
+            }
+        }
+
+        private void RestoreFromTray()
+        {
+            Show();
+            WindowState = FormWindowState.Normal;
+            _trayIcon.Visible = false;
+        }
+
+        private void StartAutoRestoreWatcher(int pid, string deviceName, uint width, uint height, uint refreshRate)
+        {
+            var thread = new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    var process = System.Diagnostics.Process.GetProcessById(pid);
+                    process.WaitForExit();
+                }
+                catch { /* process already gone */ }
+
+                // Marshal back to UI thread
+                if (IsDisposed) return;
+                try
+                {
+                    Invoke((Action)(() =>
+                    {
+                        try
+                        {
+                            bool success = DisplayManager.ChangeResolution(deviceName, width, height, refreshRate);
+                            AppendStatus(success
+                                ? $"✓ Auto-Restore: Resolution reverted to {width}x{height}@{refreshRate}Hz"
+                                : "✗ Auto-Restore: Failed to revert resolution");
+                        }
+                        catch (Exception ex)
+                        {
+                            AppendStatus($"✗ Auto-Restore error: {ex.Message}");
+                        }
+                    }));
+                }
+                catch { /* form closed */ }
+            });
+            thread.IsBackground = true;
+            thread.Start();
+            AppendStatus($"✓ Auto-Restore watcher started (will revert when game closes)");
+        }
+
+        private void ScanSteamBtn_Click(object? sender, EventArgs e)
+        {
+            AppendStatus("Scanning Steam library...");
+            _logger.LogInfo("Steam scan initiated");
+
+            List<SteamGame> games;
+            try
+            {
+                games = SteamScanner.GetInstalledGames();
+            }
+            catch (Exception ex)
+            {
+                AppendStatus($"✗ Steam scan failed: {ex.Message}");
+                return;
+            }
+
+            if (games.Count == 0)
+            {
+                AppendStatus("No Steam games found. Is Steam installed?");
+                MessageBox.Show("No Steam games found. Make sure Steam is installed and you have games installed.", "Steam Scan", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            AppendStatus($"Found {games.Count} Steam games.");
+
+            // Show picker dialog
+            using var picker = new Form
+            {
+                Text = $"Select Steam Game ({games.Count} found)",
+                Width = 520,
+                Height = 420,
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.Sizable,
+                Font = new Font("Tahoma", 8f),
+                MinimumSize = new Size(400, 300)
+            };
+
+            var listBox = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Tahoma", 9f),
+                IntegralHeight = false
+            };
+            foreach (var g in games)
+                listBox.Items.Add(g.Name);
+            if (listBox.Items.Count > 0) listBox.SelectedIndex = 0;
+
+            var btnPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                FlowDirection = FlowDirection.RightToLeft,
+                Height = 36,
+                Padding = new Padding(4)
+            };
+            var selectBtn = new Button { Text = "Select", Width = 80, Height = 26, DialogResult = DialogResult.OK };
+            var cancelBtn = new Button { Text = "Cancel", Width = 80, Height = 26, DialogResult = DialogResult.Cancel };
+            btnPanel.Controls.Add(selectBtn);
+            btnPanel.Controls.Add(cancelBtn);
+            picker.Controls.Add(listBox);
+            picker.Controls.Add(btnPanel);
+            picker.AcceptButton = selectBtn;
+            picker.CancelButton = cancelBtn;
+            listBox.DoubleClick += (s, ev) => { picker.DialogResult = DialogResult.OK; picker.Close(); };
+
+            if (picker.ShowDialog(this) != DialogResult.OK) return;
+            if (listBox.SelectedIndex < 0) return;
+
+            var selected = games[listBox.SelectedIndex];
+            var path = selected.ExePath;
+
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            {
+                AppendStatus($"✗ Could not find executable for {selected.Name}. Browse manually.");
+                MessageBox.Show($"Could not automatically find the executable for {selected.Name}.\n\nInstall directory:\n{selected.InstallDir}\n\nPlease use Browse to locate the .exe manually.", "EXE Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            _gamePathInput.Text = path;
+            SaveGamePathToProfile(path);
+            AppendStatus($"✓ Game set from Steam: {selected.Name}");
+            _logger.LogInfo($"Steam game selected: {selected.Name} -> {path}");
         }
 
         private GroupBox MakeGroup(string title)
@@ -1087,6 +1302,19 @@ namespace ResolutionSwitcher.Main
                 {
                     AppendStatus($"✓ Game launched (PID: {pid})");
                     SaveCurrentProfileSettings();
+
+                    // Check if auto-restore mode is selected
+                    var autoRestoreRadio = _scrollPanel.Controls.Find("autoRestoreRadio", true).FirstOrDefault() as RadioButton;
+                    if (autoRestoreRadio?.Checked == true)
+                    {
+                        var monitorConfig = _configManager?.GetConfig().Monitors
+                            .FirstOrDefault(m => m.DeviceName == monitor.DeviceName);
+                        if (monitorConfig != null)
+                        {
+                            var def = monitorConfig.DefaultResolution;
+                            StartAutoRestoreWatcher(pid, monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+                        }
+                    }
                 }
                 else
                 {

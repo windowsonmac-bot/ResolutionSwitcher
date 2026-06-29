@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace ResolutionSwitcher.Main
 {
@@ -149,21 +151,121 @@ namespace ResolutionSwitcher.Main
         private void PerformButton_Click(object? sender, EventArgs e)
         {
             var result = MessageBox.Show(
-                "Are you sure? This will delete all your profiles and settings. This cannot be undone.",
+                "Are you sure? This will delete all selected settings and cannot be undone.",
                 "Confirm Master Reset",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
 
-            if (result == DialogResult.Yes)
+            if (result != DialogResult.Yes) return;
+
+            var actions = new System.Text.StringBuilder();
+            actions.AppendLine("Master Reset Results:");
+            actions.AppendLine();
+
+            // Find the optionsFlow panel and get its checkboxes in order
+            var optionsFlow = FindControlByType<FlowLayoutPanel>(this);
+            var checkboxes = new List<CheckBox>();
+            if (optionsFlow != null)
             {
-                MessageBox.Show(
-                    "Master reset complete. Please restart the app.",
-                    "Master Reset",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                Close();
+                foreach (Control c in optionsFlow.Controls)
+                {
+                    if (c is CheckBox cb) checkboxes.Add(cb);
+                }
             }
+
+            bool deleteProfiles  = checkboxes.Count > 0 && checkboxes[0].Checked;
+            bool clearMonitors   = checkboxes.Count > 1 && checkboxes[1].Checked;
+            bool removeStartup   = checkboxes.Count > 2 && checkboxes[2].Checked;
+            bool deleteLog       = checkboxes.Count > 3 && checkboxes[3].Checked;
+            bool resetTheme      = checkboxes.Count > 4 && checkboxes[4].Checked;
+
+            // 1. Delete config file (profiles + monitor defaults)
+            if (deleteProfiles || clearMonitors)
+            {
+                try
+                {
+                    var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+                    if (System.IO.File.Exists(configPath))
+                    {
+                        System.IO.File.Delete(configPath);
+                        actions.AppendLine("✓ Config file deleted (profiles + monitor defaults)");
+                    }
+                    else
+                    {
+                        actions.AppendLine("- Config file not found (already clean)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    actions.AppendLine($"✗ Failed to delete config: {ex.Message}");
+                }
+            }
+
+            // 2. Remove startup registry entry
+            if (removeStartup)
+            {
+                try
+                {
+                    using var key = Registry.CurrentUser.OpenSubKey(
+                        @"Software\Microsoft\Windows\CurrentVersion\Run", true);
+                    key?.DeleteValue("ResolutionSwitcher", false);
+                    actions.AppendLine("✓ Startup registry entry removed");
+                }
+                catch (Exception ex)
+                {
+                    actions.AppendLine($"✗ Failed to remove startup entry: {ex.Message}");
+                }
+            }
+
+            // 3. Delete log file
+            if (deleteLog)
+            {
+                try
+                {
+                    var logPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "resolutionswitcher.log");
+                    if (System.IO.File.Exists(logPath))
+                    {
+                        System.IO.File.Delete(logPath);
+                        actions.AppendLine("✓ Log file deleted");
+                    }
+                    else
+                    {
+                        actions.AppendLine("- Log file not found");
+                    }
+                    Logger.Instance.ClearLog();
+                }
+                catch (Exception ex)
+                {
+                    actions.AppendLine($"✗ Failed to delete log: {ex.Message}");
+                }
+            }
+
+            // 4. Reset theme to light
+            if (resetTheme)
+            {
+                ThemeManager.SetTheme(AppTheme.Light);
+                actions.AppendLine("✓ Theme reset to Light mode");
+            }
+
+            MessageBox.Show(
+                actions.ToString() + "\nPlease restart the app for all changes to take effect.",
+                "Master Reset Complete",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            Close();
+        }
+
+        private static T? FindControlByType<T>(Control parent) where T : Control
+        {
+            foreach (Control child in parent.Controls)
+            {
+                if (child is T match) return match;
+                var found = FindControlByType<T>(child);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
