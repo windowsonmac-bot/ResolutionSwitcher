@@ -748,12 +748,12 @@ namespace ResolutionSwitcher.Main
             };
 
             var trayMenu = new ContextMenuStrip();
-            trayMenu.Items.Add("Show", null, (s, ev) => { Show(); WindowState = FormWindowState.Normal; _trayIcon.Visible = false; });
+            trayMenu.Items.Add("Show", null, (s, ev) => RestoreFromTray());
             trayMenu.Items.Add("Reset Resolution", null, (s, ev) => ResetBtn_Click(null, EventArgs.Empty));
             trayMenu.Items.Add(new ToolStripSeparator());
             trayMenu.Items.Add("Exit", null, (s, ev) => Application.Exit());
             _trayIcon.ContextMenuStrip = trayMenu;
-            _trayIcon.DoubleClick += (s, ev) => { Show(); WindowState = FormWindowState.Normal; _trayIcon.Visible = false; };
+            _trayIcon.DoubleClick += (s, ev) => RestoreFromTray();
 
             ResumeLayout(false);
             PerformLayout();
@@ -808,6 +808,13 @@ namespace ResolutionSwitcher.Main
                 _trayIcon.Visible = true;
                 _trayIcon.ShowBalloonTip(1500, "ResolutionSwitcher", "Running in background. Double-click to restore.", ToolTipIcon.Info);
             }
+        }
+
+        private void RestoreFromTray()
+        {
+            Show();
+            WindowState = FormWindowState.Normal;
+            _trayIcon.Visible = false;
         }
 
         private void StartAutoRestoreWatcher(int pid, string deviceName, uint width, uint height, uint refreshRate)

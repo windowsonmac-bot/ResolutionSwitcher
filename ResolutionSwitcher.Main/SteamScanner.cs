@@ -20,7 +20,18 @@ namespace ResolutionSwitcher.Main
 
         public static string? FindSteamInstallPath()
         {
-            // Check registry first
+            // Check HKLM first (typical system-wide install), then HKCU
+            try
+            {
+                using var key = Registry.LocalMachine.OpenSubKey(@"Software\Valve\Steam")
+                             ?? Registry.LocalMachine.OpenSubKey(@"Software\Wow6432Node\Valve\Steam");
+                var path = key?.GetValue("InstallPath") as string;
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                    return path;
+            }
+            catch { }
+
+            // Fallback: HKCU (per-user install)
             try
             {
                 using var key = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam");
