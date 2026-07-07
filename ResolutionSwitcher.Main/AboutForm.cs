@@ -227,9 +227,9 @@ VERSION INFORMATION
 Version:     1.0.0
 Runtime:     .NET 8 (self-contained)
 Platform:    Windows 10 / Windows 11 (x64)
-Config file: profiles.json (app folder)
+Config file: config.json (app folder)
 Theme file:  theme.cfg (app folder)
-Log file:    resolutionswitcher.log (app folder, if logging enabled)
+Log file:    debug.log (app folder, if logging enabled)
 
 AUTHOR & CREDITS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

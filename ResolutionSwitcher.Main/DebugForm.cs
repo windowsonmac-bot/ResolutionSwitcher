@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -11,12 +12,15 @@ namespace ResolutionSwitcher.Main
         private GroupBox _logGroup = null!;
         private RichTextBox _logRichTextBox = null!;
         private CheckBox _enableLoggingCheckBox = null!;
+        private readonly ConfigManager? _configManager;
 
-        public DebugForm()
+        public DebugForm(ConfigManager? configManager = null)
         {
+            _configManager = configManager;
             InitializeUI();
             ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
             ApplyTheme();
+            LoadLogFromDisk();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -104,8 +108,10 @@ namespace ResolutionSwitcher.Main
                 Name = "_enableLoggingCheckBox",
                 Text = "Enable debug logging",
                 AutoSize = true,
-                Margin = new Padding(0, 4, 12, 4)
+                Margin = new Padding(0, 4, 12, 4),
+                Checked = Logger.Instance.IsLoggingEnabled
             };
+            _enableLoggingCheckBox.CheckedChanged += EnableLoggingCheckBox_CheckedChanged;
 
             var openLogFileButton = new Button
             {
@@ -115,7 +121,7 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Margin = new Padding(4, 2, 0, 2)
             };
-            openLogFileButton.Click += (_, _) => MessageBox.Show("Log file integration will be available in the next update.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            openLogFileButton.Click += OpenLogFileButton_Click;
 
             var clearLogButton = new Button
             {
@@ -125,7 +131,17 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 8f),
                 Margin = new Padding(4, 2, 0, 2)
             };
-            clearLogButton.Click += (_, _) => _logRichTextBox.Clear();
+            clearLogButton.Click += ClearLogButton_Click;
+
+            var refreshButton = new Button
+            {
+                Text = "Refresh",
+                AutoSize = true,
+                Padding = new Padding(10, 4, 10, 4),
+                Font = new Font("Tahoma", 8f),
+                Margin = new Padding(4, 2, 0, 2)
+            };
+            refreshButton.Click += (_, _) => LoadLogFromDisk();
 
             var copyAllButton = new Button
             {
@@ -146,6 +162,7 @@ namespace ResolutionSwitcher.Main
             controlsPanel.Controls.Add(_enableLoggingCheckBox);
             controlsPanel.Controls.Add(openLogFileButton);
             controlsPanel.Controls.Add(clearLogButton);
+            controlsPanel.Controls.Add(refreshButton);
             controlsPanel.Controls.Add(copyAllButton);
 
             content.Controls.Add(_logGroup, 0, 0);
@@ -160,6 +177,55 @@ namespace ResolutionSwitcher.Main
         private void ThemeManager_ThemeChanged(object? sender, EventArgs e)
         {
             ApplyTheme();
+        }
+
+        private void EnableLoggingCheckBox_CheckedChanged(object? sender, EventArgs e)
+        {
+            Logger.Instance.SetLoggingEnabled(_enableLoggingCheckBox.Checked);
+
+            if (_configManager != null)
+            {
+                _configManager.GetConfig().Behavior.EnableDebugLogging = _enableLoggingCheckBox.Checked;
+                _configManager.Save();
+            }
+
+            LoadLogFromDisk();
+        }
+
+        private void OpenLogFileButton_Click(object? sender, EventArgs e)
+        {
+            var logPath = Logger.Instance.LogPath;
+            if (!System.IO.File.Exists(logPath))
+            {
+                MessageBox.Show($"No log file yet.\n\nIt will be created at:\n{logPath}\n\nonce debug logging is enabled and an event occurs.", "Log File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(logPath) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open log file:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ClearLogButton_Click(object? sender, EventArgs e)
+        {
+            Logger.Instance.ClearLog();
+            _logRichTextBox.Clear();
+            _logRichTextBox.Text = "[Log cleared.]";
+        }
+
+        private void LoadLogFromDisk()
+        {
+            var contents = Logger.Instance.ReadLogContents();
+            _logRichTextBox.Text = string.IsNullOrEmpty(contents)
+                ? "[Debug logging is currently disabled or the log is empty. Enable logging above to start capturing.]"
+                : contents;
+            _logRichTextBox.SelectionStart = _logRichTextBox.Text.Length;
+            _logRichTextBox.ScrollToCaret();
         }
 
         private void ApplyTheme()

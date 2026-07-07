@@ -69,6 +69,9 @@ namespace ResolutionSwitcher.Main
             [JsonProperty("launchPath")]
             public string LaunchPath { get; set; } = "";
 
+            [JsonProperty("steamAppId")]
+            public string SteamAppId { get; set; } = "";
+
             [JsonProperty("launchMode")]
             public string LaunchMode { get; set; } = "autoRestore";
         }
@@ -101,6 +104,12 @@ namespace ResolutionSwitcher.Main
 
             [JsonProperty("behavior")]
             public BehaviorConfig Behavior { get; set; } = new();
+
+            [JsonProperty("hotkeys")]
+            public HotkeyConfig Hotkeys { get; set; } = new();
+
+            [JsonProperty("pendingRevert")]
+            public PendingRevertState PendingRevert { get; set; } = new();
         }
 
         public class BehaviorConfig
@@ -116,6 +125,53 @@ namespace ResolutionSwitcher.Main
 
             [JsonProperty("enableDebugLogging")]
             public bool EnableDebugLogging { get; set; } = false;
+
+            [JsonProperty("safeModeEnabled")]
+            public bool SafeModeEnabled { get; set; } = true;
+
+            [JsonProperty("crashRecoveryEnabled")]
+            public bool CrashRecoveryEnabled { get; set; } = true;
+        }
+
+        public class HotkeyConfig
+        {
+            [JsonProperty("resetHotkey")]
+            public string ResetHotkey { get; set; } = "Ctrl+Alt+R";
+
+            [JsonProperty("launchHotkey")]
+            public string LaunchHotkey { get; set; } = "Ctrl+Alt+L";
+
+            [JsonProperty("lightThemeHotkey")]
+            public string LightThemeHotkey { get; set; } = "Ctrl+Alt+1";
+
+            [JsonProperty("darkThemeHotkey")]
+            public string DarkThemeHotkey { get; set; } = "Ctrl+Alt+2";
+
+            [JsonProperty("emergencyResetHotkey")]
+            public string EmergencyResetHotkey { get; set; } = "Ctrl+Alt+F12";
+        }
+
+        /// <summary>
+        /// Marks that a non-default resolution is currently active. If this is still
+        /// set to true the next time the app starts, the previous session did not
+        /// exit cleanly (crash/kill) and the default resolution should be restored.
+        /// </summary>
+        public class PendingRevertState
+        {
+            [JsonProperty("active")]
+            public bool Active { get; set; } = false;
+
+            [JsonProperty("deviceName")]
+            public string DeviceName { get; set; } = "";
+
+            [JsonProperty("width")]
+            public uint Width { get; set; }
+
+            [JsonProperty("height")]
+            public uint Height { get; set; }
+
+            [JsonProperty("refreshRate")]
+            public uint RefreshRate { get; set; }
         }
 
         private Config _config;
@@ -177,7 +233,9 @@ namespace ResolutionSwitcher.Main
                 if (config.Profiles == null) config.Profiles = new List<GameProfile>();
                 if (config.ResolutionPresets == null) config.ResolutionPresets = new List<ResolutionPreset>();
                 if (config.Behavior == null) config.Behavior = new BehaviorConfig();
-                
+                if (config.Hotkeys == null) config.Hotkeys = new HotkeyConfig();
+                if (config.PendingRevert == null) config.PendingRevert = new PendingRevertState();
+
                 return true;
             }
             catch (Exception ex)

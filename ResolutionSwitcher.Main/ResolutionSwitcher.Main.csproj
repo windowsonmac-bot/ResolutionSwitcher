@@ -23,4 +23,20 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ResolutionSwitcher.Monitor\ResolutionSwitcher.Monitor.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="CopyMonitorHelper" AfterTargets="Build">
+    <PropertyGroup>
+      <MonitorOutputDir>$(MSBuildThisFileDirectory)..\ResolutionSwitcher.Monitor\bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\</MonitorOutputDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <MonitorHelperFiles Include="$(MonitorOutputDir)**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MonitorHelperFiles)"
+          DestinationFiles="@(MonitorHelperFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

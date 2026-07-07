@@ -2,3 +2,5 @@ ResolutionSwitcher.Main/obj/
 ResolutionSwitcher.Main/bin/
 ResolutionSwitcher.Monitor/obj/
 ResolutionSwitcher.Monitor/bin/
+.vs/
+*.user

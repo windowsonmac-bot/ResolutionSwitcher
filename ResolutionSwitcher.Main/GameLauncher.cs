@@ -33,7 +33,7 @@ namespace ResolutionSwitcher.Main
                 int processId = method switch
                 {
                     LaunchMethod.Steam => LaunchViaSteam(launchPath),
-                    LaunchMethod.SteamAppId => LaunchViaSteamAppId(launchPath),
+                    LaunchMethod.SteamAppId => LaunchViaSteamAppId(launchPath, additionalArgs),
                     LaunchMethod.DirectEXE => LaunchDirectEXE(launchPath),
                     LaunchMethod.Custom => LaunchCustom(launchPath, additionalArgs),
                     _ => throw new Exception($"Unknown launch method: {method}")
@@ -58,9 +58,13 @@ namespace ResolutionSwitcher.Main
         }
 
         /// <summary>
-        /// Launches game via Steam using app ID (e.g., steam://run/730)
+        /// Launches game via Steam using app ID (e.g., steam://run/730).
+        /// Steam relaunches the game under its own process tree, so the app ID itself is never
+        /// a valid process name. The actual game PID is found via a short, bounded check
+        /// (launch-time only, not continuous polling while gaming) using the profile's known
+        /// executable name as a hint.
         /// </summary>
-        private static int LaunchViaSteamAppId(string appId)
+        private static int LaunchViaSteamAppId(string appId, string? exeHintPath)
         {
             try
             {
@@ -73,19 +77,34 @@ namespace ResolutionSwitcher.Main
                     CreateNoWindow = true
                 };
 
-                using (var process = Process.Start(startInfo))
+                Process.Start(startInfo);
+
+                var processName = !string.IsNullOrEmpty(exeHintPath)
+                    ? Path.GetFileNameWithoutExtension(exeHintPath)
+                    : null;
+
+                if (string.IsNullOrEmpty(processName))
                 {
-                    if (process != null)
+                    _logger.LogError("Cannot detect the launched game process: no executable name known for this profile. Re-run Steam scan to link this profile to its game executable.");
+                    return -1;
+                }
+
+                // Bounded, one-time check at launch (NOT continuous scanning while gaming) -
+                // Steam can take a few seconds to actually spawn the game process.
+                const int pollIntervalMs = 2000;
+                const int maxAttempts = 5;
+                for (int attempt = 0; attempt < maxAttempts; attempt++)
+                {
+                    System.Threading.Thread.Sleep(pollIntervalMs);
+
+                    var gameProcess = FindGameProcess(processName);
+                    if (gameProcess != null)
                     {
-                        System.Threading.Thread.Sleep(2000); // Give Steam time to launch game
-                        var gameProcess = FindGameProcess(appId);
-                        if (gameProcess != null)
-                        {
-                            return gameProcess.Id;
-                        }
+                        return gameProcess.Id;
                     }
                 }
 
+                _logger.LogError($"Timed out waiting for '{processName}' to start via Steam (AppID: {appId})");
                 return -1;
             }
             catch (Exception ex)

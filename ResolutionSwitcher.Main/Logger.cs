@@ -21,6 +21,16 @@ namespace ResolutionSwitcher.Main
             _enableLogging = false; // Disabled by default
         }
 
+        /// <summary>
+        /// Full path to the debug log file on disk.
+        /// </summary>
+        public string LogPath => _logPath;
+
+        /// <summary>
+        /// Whether logging is currently enabled.
+        /// </summary>
+        public bool IsLoggingEnabled => _enableLogging;
+
         public static Logger Instance
         {
             get
@@ -136,6 +146,28 @@ namespace ResolutionSwitcher.Main
             catch
             {
                 // Silently fail
+            }
+        }
+
+        /// <summary>
+        /// Reads the current contents of the debug log file, if it exists.
+        /// Returns an empty string if the file is missing or cannot be read.
+        /// </summary>
+        public string ReadLogContents()
+        {
+            try
+            {
+                lock (_lock)
+                {
+                    if (!File.Exists(_logPath)) return string.Empty;
+                    using var stream = new FileStream(_logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    using var reader = new StreamReader(stream, Encoding.UTF8);
+                    return reader.ReadToEnd();
+                }
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
     }

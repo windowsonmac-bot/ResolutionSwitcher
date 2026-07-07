@@ -53,11 +53,18 @@ namespace ResolutionSwitcher.Main
 
         private const int HOTKEY_RESET = 1;
         private const int HOTKEY_LAUNCH = 2;
-        private const int HOTKEY_EMERGENCY = 3;
-        private const uint MOD_CONTROL = 0x0002;
+        private const int HOTKEY_LIGHT = 3;
+        private const int HOTKEY_DARK = 4;
+        private const int HOTKEY_EMERGENCY = 5;
+        private static readonly int[] AllHotkeyIds = { HOTKEY_RESET, HOTKEY_LAUNCH, HOTKEY_LIGHT, HOTKEY_DARK, HOTKEY_EMERGENCY };
         private const uint MOD_ALT = 0x0001;
+        private const uint MOD_CONTROL = 0x0002;
+        private const uint MOD_SHIFT = 0x0004;
+        private const uint MOD_WIN = 0x0008;
         private const uint VK_R = 0x52;
         private const uint VK_L = 0x4C;
+        private const uint VK_1 = 0x31;
+        private const uint VK_2 = 0x32;
         private const uint VK_F12 = 0x7B;
 
         public MainForm()
@@ -751,9 +758,7 @@ namespace ResolutionSwitcher.Main
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            UnregisterHotKey(Handle, HOTKEY_RESET);
-            UnregisterHotKey(Handle, HOTKEY_LAUNCH);
-            UnregisterHotKey(Handle, HOTKEY_EMERGENCY);
+            UnregisterAllHotkeys();
             ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
             _trayIcon?.Dispose();
             base.OnFormClosed(e);
@@ -762,9 +767,128 @@ namespace ResolutionSwitcher.Main
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            RegisterHotKey(Handle, HOTKEY_RESET, MOD_CONTROL | MOD_ALT, VK_R);
-            RegisterHotKey(Handle, HOTKEY_LAUNCH, MOD_CONTROL | MOD_ALT, VK_L);
-            RegisterHotKey(Handle, HOTKEY_EMERGENCY, MOD_CONTROL | MOD_ALT, VK_F12);
+            RegisterAllHotkeys();
+        }
+
+        private void UnregisterAllHotkeys()
+        {
+            foreach (var id in AllHotkeyIds)
+            {
+                UnregisterHotKey(Handle, id);
+            }
+        }
+
+        /// <summary>
+        /// Registers global hotkeys using the current config (or defaults if unset/unparsable).
+        /// Safe to call again after Settings changes hotkey text - unregisters first.
+        /// </summary>
+        private void RegisterAllHotkeys()
+        {
+            UnregisterAllHotkeys();
+
+            var hotkeys = _configManager?.GetConfig().Hotkeys ?? new ConfigManager.HotkeyConfig();
+
+            RegisterOneHotkey(HOTKEY_RESET, hotkeys.ResetHotkey, MOD_CONTROL | MOD_ALT, VK_R);
+            RegisterOneHotkey(HOTKEY_LAUNCH, hotkeys.LaunchHotkey, MOD_CONTROL | MOD_ALT, VK_L);
+            RegisterOneHotkey(HOTKEY_LIGHT, hotkeys.LightThemeHotkey, MOD_CONTROL | MOD_ALT, VK_1);
+            RegisterOneHotkey(HOTKEY_DARK, hotkeys.DarkThemeHotkey, MOD_CONTROL | MOD_ALT, VK_2);
+            RegisterOneHotkey(HOTKEY_EMERGENCY, hotkeys.EmergencyResetHotkey, MOD_CONTROL | MOD_ALT, VK_F12);
+        }
+
+        private void RegisterOneHotkey(int id, string? hotkeyText, uint fallbackModifiers, uint fallbackVk)
+        {
+            if (!TryParseHotkey(hotkeyText, out var modifiers, out var vk))
+            {
+                modifiers = fallbackModifiers;
+                vk = fallbackVk;
+            }
+
+            if (!RegisterHotKey(Handle, id, modifiers, vk))
+            {
+                _logger.LogWarning($"Failed to register hotkey id {id} ({hotkeyText}). It may be in use by another application.");
+            }
+        }
+
+        /// <summary>
+        /// Parses a hotkey string like "Ctrl+Alt+R" into Win32 modifier flags and a virtual key code.
+        /// </summary>
+        internal static bool TryParseHotkey(string? hotkeyText, out uint modifiers, out uint vk)
+        {
+            modifiers = 0;
+            vk = 0;
+
+            if (string.IsNullOrWhiteSpace(hotkeyText)) return false;
+
+            var parts = hotkeyText.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length < 2) return false;
+
+            string? keyPart = null;
+            foreach (var part in parts)
+            {
+                switch (part.ToUpperInvariant())
+                {
+                    case "CTRL":
+                    case "CONTROL":
+                        modifiers |= MOD_CONTROL;
+                        break;
+                    case "ALT":
+                        modifiers |= MOD_ALT;
+                        break;
+                    case "SHIFT":
+                        modifiers |= MOD_SHIFT;
+                        break;
+                    case "WIN":
+                    case "WINDOWS":
+                        modifiers |= MOD_WIN;
+                        break;
+                    default:
+                        keyPart = part;
+                        break;
+                }
+            }
+
+            if (keyPart == null || modifiers == 0) return false;
+
+            keyPart = keyPart.ToUpperInvariant();
+
+            // Function keys F1-F24
+            if (keyPart.Length is 2 or 3 && keyPart[0] == 'F' && int.TryParse(keyPart.AsSpan(1), out var fNum) && fNum is >= 1 and <= 24)
+            {
+                vk = (uint)(0x70 + (fNum - 1)); // VK_F1 = 0x70
+                return true;
+            }
+
+            // Top-row digit keys captured as "D0".."D9" (Keys.D0-Keys.D9.ToString())
+            if (keyPart.Length == 2 && keyPart[0] == 'D' && keyPart[1] is >= '0' and <= '9')
+            {
+                vk = keyPart[1];
+                return true;
+            }
+
+            // Numpad digit keys captured as "NUMPAD0".."NUMPAD9"
+            if (keyPart.StartsWith("NUMPAD", StringComparison.Ordinal) && keyPart.Length == 7 && keyPart[6] is >= '0' and <= '9')
+            {
+                vk = (uint)(0x60 + (keyPart[6] - '0')); // VK_NUMPAD0 = 0x60
+                return true;
+            }
+
+            // Single alphanumeric character
+            if (keyPart.Length == 1)
+            {
+                char c = keyPart[0];
+                if (c is >= 'A' and <= 'Z')
+                {
+                    vk = c;
+                    return true;
+                }
+                if (c is >= '0' and <= '9')
+                {
+                    vk = c;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         protected override void WndProc(ref Message m)
@@ -779,6 +903,14 @@ namespace ResolutionSwitcher.Main
                         break;
                     case HOTKEY_LAUNCH:
                         LaunchGameBtn_Click(null, EventArgs.Empty);
+                        break;
+                    case HOTKEY_LIGHT:
+                        ThemeManager.SetTheme(AppTheme.Light);
+                        AppendStatus("Theme set to Light mode (hotkey).");
+                        break;
+                    case HOTKEY_DARK:
+                        ThemeManager.SetTheme(AppTheme.Dark);
+                        AppendStatus("Theme set to Dark mode (hotkey).");
                         break;
                     case HOTKEY_EMERGENCY:
                         ResetBtn_Click(null, EventArgs.Empty);
@@ -939,9 +1071,9 @@ namespace ResolutionSwitcher.Main
             }
 
             _gamePathInput.Text = path;
-            SaveGamePathToProfile(path);
-            AppendStatus($"✓ Game set from Steam: {selected.Name}");
-            _logger.LogInfo($"Steam game selected: {selected.Name} -> {path}");
+            SaveSteamGameToProfile(selected);
+            AppendStatus($"✓ Game set from Steam: {selected.Name} (AppID: {selected.AppId})");
+            _logger.LogInfo($"Steam game selected: {selected.Name} -> {path} (AppID: {selected.AppId})");
         }
 
         private GroupBox MakeGroup(string title)
@@ -1201,6 +1333,8 @@ namespace ResolutionSwitcher.Main
                 _logger.LogInfo("Initializing ResolutionSwitcher main application");
 
                 _configManager = new ConfigManager();
+                CheckAndRecoverFromCrash();
+
                 _detectedMonitors.Clear();
                 _detectedMonitors.AddRange(DisplayManager.GetMonitors());
 
@@ -1241,6 +1375,60 @@ namespace ResolutionSwitcher.Main
             }
         }
 
+        /// <summary>
+        /// Crash Recovery: if a non-default resolution was left active from a session
+        /// that did not exit cleanly (crash, force-kill, power loss), revert it now.
+        /// </summary>
+        private void CheckAndRecoverFromCrash()
+        {
+            if (_configManager == null) return;
+
+            var config = _configManager.GetConfig();
+            if (!config.Behavior.CrashRecoveryEnabled) return;
+
+            var pending = config.PendingRevert;
+            if (!pending.Active || string.IsNullOrEmpty(pending.DeviceName)) return;
+
+            _logger.LogWarning("Crash Recovery: detected an unclean shutdown with a non-default resolution active. Reverting now.");
+            bool success = DisplayManager.ChangeResolution(pending.DeviceName, pending.Width, pending.Height, pending.RefreshRate);
+            AppendStatus(success
+                ? $"⚠ Crash Recovery: previous session did not exit cleanly. Reverted to {pending.Width}x{pending.Height}@{pending.RefreshRate}Hz."
+                : "⚠ Crash Recovery: previous session did not exit cleanly, but revert failed.");
+
+            ClearPendingRevertMarker();
+        }
+
+        /// <summary>
+        /// Marks that a non-default resolution is now active, so Crash Recovery can
+        /// restore it on next startup if this session never exits cleanly.
+        /// </summary>
+        private void SetPendingRevertMarker(string deviceName, uint width, uint height, uint refreshRate)
+        {
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            if (!config.Behavior.CrashRecoveryEnabled) return;
+
+            config.PendingRevert.Active = true;
+            config.PendingRevert.DeviceName = deviceName;
+            config.PendingRevert.Width = width;
+            config.PendingRevert.Height = height;
+            config.PendingRevert.RefreshRate = refreshRate;
+            _configManager.Save();
+        }
+
+        /// <summary>
+        /// Clears the crash-recovery marker after an explicit, successful reset.
+        /// </summary>
+        private void ClearPendingRevertMarker()
+        {
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            if (!config.PendingRevert.Active) return;
+
+            config.PendingRevert.Active = false;
+            _configManager.Save();
+        }
+
         private void LightThemeButton_Click(object? sender, EventArgs e)
         {
             ThemeManager.SetTheme(AppTheme.Light);
@@ -1255,6 +1443,7 @@ namespace ResolutionSwitcher.Main
 
         private void LaunchGameBtn_Click(object? sender, EventArgs e)
         {
+            StatusWindow? statusWindow = null;
             try
             {
                 var monitor = GetSelectedMonitor();
@@ -1284,14 +1473,26 @@ namespace ResolutionSwitcher.Main
                     return;
                 }
 
+                if (config.Behavior.ShowStatusWindow)
+                {
+                    statusWindow = new StatusWindow { Owner = this };
+                    statusWindow.SetTitle(profile.GameName);
+                    statusWindow.AddStep("✓", $"Monitor: {monitor.FriendlyName}");
+                    statusWindow.UpdateProgress(10, "Applying resolution...");
+                    statusWindow.Show();
+                }
+
                 AppendStatus($"Applying {width}x{height}@{hz}Hz...");
                 bool resOk = DisplayManager.ChangeResolution(monitor.DeviceName, width, height, hz);
                 if (!resOk)
                 {
                     AppendStatus("✗ Failed to apply resolution. Launch cancelled.");
+                    statusWindow?.AddStep("✗", "Failed to apply resolution. Launch cancelled.");
                     return;
                 }
                 AppendStatus($"✓ Resolution applied: {width}x{height}@{hz}Hz");
+                statusWindow?.AddStep("✓", $"Resolution applied: {width}x{height}@{hz}Hz");
+                statusWindow?.UpdateProgress(35, "Resolution applied");
 
                 var launchMethod = profile.LaunchMethod switch
                 {
@@ -1301,13 +1502,26 @@ namespace ResolutionSwitcher.Main
                     _ => GameLauncher.LaunchMethod.DirectEXE
                 };
 
+                if (launchMethod == GameLauncher.LaunchMethod.SteamAppId && string.IsNullOrWhiteSpace(profile.SteamAppId))
+                {
+                    AppendStatus("✗ No Steam App ID saved for this profile. Use the Steam... button to select a game first.");
+                    statusWindow?.AddStep("✗", "No Steam App ID saved for this profile.");
+                    return;
+                }
+
+                var launchTarget = launchMethod == GameLauncher.LaunchMethod.SteamAppId ? profile.SteamAppId : profile.LaunchPath;
+                var exeHint = launchMethod == GameLauncher.LaunchMethod.SteamAppId ? profile.LaunchPath : null;
+
                 AppendStatus($"Launching {profile.GameName}...");
-                _logger.LogInfo($"Apply and Launch: {width}x{height}@{hz}Hz on {monitor.DeviceName}, game: {profile.LaunchPath}");
-                int pid = GameLauncher.LaunchGame(launchMethod, profile.LaunchPath);
+                statusWindow?.UpdateProgress(55, $"Launching {profile.GameName}...");
+                _logger.LogInfo($"Apply and Launch: {width}x{height}@{hz}Hz on {monitor.DeviceName}, game: {launchTarget}");
+                int pid = GameLauncher.LaunchGame(launchMethod, launchTarget, exeHint);
 
                 if (pid > 0)
                 {
                     AppendStatus($"✓ Game launched (PID: {pid})");
+                    statusWindow?.AddStep("✓", $"Game launched (PID: {pid})");
+                    statusWindow?.UpdateProgress(75, "Game launched");
                     SaveCurrentProfileSettings();
 
                     var autoRestoreRadio = _scrollPanel.Controls.Find("autoRestoreRadio", true).FirstOrDefault() as RadioButton;
@@ -1326,38 +1540,54 @@ namespace ResolutionSwitcher.Main
                             {
                                 AppendStatus($"✓ Auto-Restore helper launched. Main app closing now.");
                                 AppendStatus($"  Helper will revert to {def.Width}x{def.Height}@{def.RefreshRate}Hz when game closes.");
+                                statusWindow?.AddStep("✓", "Auto-Restore helper launched.");
+                                statusWindow?.UpdateProgress(100, "Done - Auto-Restore active");
                                 ExitAfterDelay(800);
                             }
                             else
                             {
                                 AppendStatus("⚠ Helper exe not found. Auto-restore will not work. Place ResolutionSwitcher.Monitor.exe in the same folder.");
+                                statusWindow?.AddStep("⚠", "Helper exe not found. Auto-restore will not work.");
                             }
                         }
                         else
                         {
                             AppendStatus("⚠ No default resolution saved for this monitor. Cannot start helper.");
+                            statusWindow?.AddStep("⚠", "No default resolution saved for this monitor.");
                         }
                     }
                     else
                     {
                         // Instant Kill Mode: exit immediately, nothing runs
+                        var instantKillMonitorConfig = _configManager?.GetConfig().Monitors
+                            .FirstOrDefault(m => m.DeviceName == monitor.DeviceName);
+                        if (instantKillMonitorConfig != null)
+                        {
+                            var def = instantKillMonitorConfig.DefaultResolution;
+                            SetPendingRevertMarker(monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+                        }
                         AppendStatus($"✓ Instant Kill Mode: closing now. Use Reset Resolution to revert when done gaming.");
+                        statusWindow?.AddStep("✓", "Instant Kill Mode: closing now.");
+                        statusWindow?.UpdateProgress(100, "Done - closing");
                         ExitAfterDelay(600);
                     }
                 }
                 else
                 {
                     AppendStatus("✗ Game launch failed.");
+                    statusWindow?.AddStep("✗", "Game launch failed.");
                 }
             }
             catch (InvalidOperationException ex)
             {
                 AppendStatus($"✗ {ex.Message}");
+                statusWindow?.AddStep("✗", ex.Message);
             }
             catch (Exception ex)
             {
                 AppendStatus($"✗ Error: {ex.Message}");
                 _logger.LogError("LaunchGame error", ex);
+                statusWindow?.AddStep("✗", $"Error: {ex.Message}");
             }
         }
 
@@ -1381,6 +1611,7 @@ namespace ResolutionSwitcher.Main
                 {
                     AppendStatus($"✓ Resolution applied: {width}x{height}@{hz}Hz");
                     SaveCurrentProfileSettings();
+                    HandlePostApplySafety(monitor, width, height, hz);
                 }
                 else
                 {
@@ -1395,6 +1626,48 @@ namespace ResolutionSwitcher.Main
             {
                 AppendStatus($"✗ Error: {ex.Message}");
                 _logger.LogError("ApplyOnly error", ex);
+            }
+        }
+
+        /// <summary>
+        /// After a manual resolution change: updates the crash-recovery marker, and if
+        /// Safe Mode is enabled and the new resolution differs from the monitor's saved
+        /// default, shows a confirm/revert countdown dialog.
+        /// </summary>
+        private void HandlePostApplySafety(DisplayManager.MonitorInfo monitor, uint width, uint height, uint hz)
+        {
+            if (_configManager == null) return;
+
+            var config = _configManager.GetConfig();
+            var monitorConfig = config.Monitors.FirstOrDefault(m => m.DeviceName == monitor.DeviceName);
+            if (monitorConfig == null) return;
+
+            var def = monitorConfig.DefaultResolution;
+            bool isDefault = width == def.Width && height == def.Height && hz == def.RefreshRate;
+
+            if (isDefault)
+            {
+                ClearPendingRevertMarker();
+                return;
+            }
+
+            SetPendingRevertMarker(monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+
+            if (!config.Behavior.SafeModeEnabled) return;
+
+            using var confirmForm = new SafeModeConfirmForm($"{width}x{height}@{hz}Hz");
+            confirmForm.ShowDialog(this);
+
+            if (confirmForm.RevertRequested)
+            {
+                bool reverted = DisplayManager.ChangeResolution(monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+                AppendStatus(reverted
+                    ? $"✓ Safe Mode: reverted to {def.Width}x{def.Height}@{def.RefreshRate}Hz."
+                    : "✗ Safe Mode: revert failed.");
+                if (reverted)
+                {
+                    ClearPendingRevertMarker();
+                }
             }
         }
 
@@ -1430,7 +1703,10 @@ namespace ResolutionSwitcher.Main
 
                 bool success = DisplayManager.ChangeResolution(monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
                 if (success)
+                {
                     AppendStatus($"✓ Reset to default: {def.Width}x{def.Height}@{def.RefreshRate}Hz");
+                    ClearPendingRevertMarker();
+                }
                 else
                     AppendStatus("✗ Failed to reset resolution.");
             }
@@ -1481,14 +1757,15 @@ namespace ResolutionSwitcher.Main
         private void SettingsBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Settings clicked");
-            using var settingsForm = new SettingsForm();
+            using var settingsForm = new SettingsForm(_configManager);
+            settingsForm.HotkeysChanged += (_, _) => RegisterAllHotkeys();
             settingsForm.ShowDialog(this);
         }
 
         private void DebugBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Debug clicked");
-            using var debugForm = new DebugForm();
+            using var debugForm = new DebugForm(_configManager);
             debugForm.ShowDialog(this);
         }
 
@@ -1527,6 +1804,19 @@ namespace ResolutionSwitcher.Main
                 profile.LaunchPath = path;
                 _configManager.Save();
             }
+        }
+
+        private void SaveSteamGameToProfile(SteamGame game)
+        {
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            var profile = GetActiveProfile(config);
+            if (profile == null) return;
+
+            profile.GameName = string.IsNullOrEmpty(game.Name) ? Path.GetFileNameWithoutExtension(game.ExePath) : game.Name;
+            profile.LaunchPath = game.ExePath;
+            profile.SteamAppId = game.AppId;
+            _configManager.Save();
         }
 
         private (uint width, uint height, uint hz) GetSelectedResolution()

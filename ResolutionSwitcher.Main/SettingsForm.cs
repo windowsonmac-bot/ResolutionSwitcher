@@ -22,9 +22,16 @@ namespace ResolutionSwitcher.Main
         private Label _safeModeHintLabel = null!;
         private Label _crashRecoveryHintLabel = null!;
         private readonly Dictionary<TextBox, string> _hotkeyDefaults = new Dictionary<TextBox, string>();
+        private TextBox _resetHotkeyBox = null!;
+        private TextBox _launchHotkeyBox = null!;
+        private TextBox _lightHotkeyBox = null!;
+        private TextBox _darkHotkeyBox = null!;
+        private TextBox _emergencyHotkeyBox = null!;
+        private readonly ConfigManager? _configManager;
 
-        public SettingsForm()
+        public SettingsForm(ConfigManager? configManager = null)
         {
+            _configManager = configManager;
             InitializeUI();
             ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
             ApplyTheme();
@@ -94,10 +101,9 @@ namespace ResolutionSwitcher.Main
                 AutoSize = true,
                 ColumnCount = 1,
                 Padding = new Padding(10),
-                RowCount = 3
+                RowCount = 2
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
@@ -142,45 +148,6 @@ namespace ResolutionSwitcher.Main
             startupLayout.Controls.Add(_startupCheckBox, 0, 0);
             startupLayout.Controls.Add(_startupHintLabel, 0, 1);
             startupGroup.Controls.Add(startupLayout);
-
-            var launchModeGroup = new GroupBox
-            {
-                Text = "Default Launch Mode",
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Margin = new Padding(0, 0, 0, 10),
-                Padding = new Padding(8, 12, 8, 10)
-            };
-
-            var launchModeLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                AutoSize = true
-            };
-            launchModeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90f));
-            launchModeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-            var launchModeLabel = new Label
-            {
-                Text = "Default mode:",
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleRight,
-                Margin = new Padding(0, 3, 6, 3)
-            };
-            var launchModeCombo = new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Dock = DockStyle.Fill,
-                Font = new Font("Tahoma", 8f)
-            };
-            launchModeCombo.Items.AddRange(new object[] { "Auto-Restore Helper", "Instant Kill Mode" });
-            launchModeCombo.SelectedIndex = 0;
-            launchModeLayout.Controls.Add(launchModeLabel, 0, 0);
-            launchModeLayout.Controls.Add(launchModeCombo, 1, 0);
-            launchModeGroup.Controls.Add(launchModeLayout);
 
             var themeGroup = new GroupBox
             {
@@ -234,8 +201,7 @@ namespace ResolutionSwitcher.Main
             themeGroup.Controls.Add(themeFlow);
 
             layout.Controls.Add(startupGroup, 0, 0);
-            layout.Controls.Add(launchModeGroup, 0, 1);
-            layout.Controls.Add(themeGroup, 0, 2);
+            layout.Controls.Add(themeGroup, 0, 1);
             tab.Controls.Add(layout);
             return tab;
         }
@@ -285,11 +251,13 @@ namespace ResolutionSwitcher.Main
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            AddHotkeyRow(table, 0, "Reset Resolution", "Ctrl + Alt + R", "_resetHotkeyBox");
-            AddHotkeyRow(table, 1, "Apply & Launch Last Profile", "Ctrl + Alt + L", "_launchHotkeyBox");
-            AddHotkeyRow(table, 2, "Switch to Light Mode", "Ctrl + Alt + 1", "_lightHotkeyBox");
-            AddHotkeyRow(table, 3, "Switch to Dark Mode", "Ctrl + Alt + 2", "_darkHotkeyBox");
-            AddHotkeyRow(table, 4, "Emergency Reset (force revert)", "Ctrl + Alt + F12", "_emergencyHotkeyBox");
+            AddHotkeyRow(table, 0, "Reset Resolution", "Ctrl + Alt + R", out _resetHotkeyBox);
+            AddHotkeyRow(table, 1, "Apply & Launch Last Profile", "Ctrl + Alt + L", out _launchHotkeyBox);
+            AddHotkeyRow(table, 2, "Switch to Light Mode", "Ctrl + Alt + 1", out _lightHotkeyBox);
+            AddHotkeyRow(table, 3, "Switch to Dark Mode", "Ctrl + Alt + 2", out _darkHotkeyBox);
+            AddHotkeyRow(table, 4, "Emergency Reset (force revert)", "Ctrl + Alt + F12", out _emergencyHotkeyBox);
+
+            LoadHotkeysFromConfig();
 
             var footerLabel = new Label
             {
@@ -308,7 +276,7 @@ namespace ResolutionSwitcher.Main
             return tab;
         }
 
-        private void AddHotkeyRow(TableLayoutPanel table, int rowIndex, string action, string defaultValue, string textBoxName)
+        private void AddHotkeyRow(TableLayoutPanel table, int rowIndex, string action, string defaultValue, out TextBox createdTextBox)
         {
             table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
@@ -324,7 +292,6 @@ namespace ResolutionSwitcher.Main
 
             var textBox = new TextBox
             {
-                Name = textBoxName,
                 Text = defaultValue,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 9f),
@@ -332,6 +299,8 @@ namespace ResolutionSwitcher.Main
                 Margin = new Padding(0, 3, 0, 3)
             };
             _hotkeyDefaults[textBox] = defaultValue;
+            textBox.Leave += HotkeyTextBox_Leave;
+            textBox.KeyDown += HotkeyTextBox_KeyDown;
 
             var resetButton = new Button
             {
@@ -341,12 +310,87 @@ namespace ResolutionSwitcher.Main
                 Font = new Font("Tahoma", 7.5f),
                 Margin = new Padding(0, 3, 0, 3)
             };
-            resetButton.Click += (_, _) => textBox.Text = _hotkeyDefaults[textBox];
+            resetButton.Click += (_, _) =>
+            {
+                textBox.Text = _hotkeyDefaults[textBox];
+                SaveHotkeysToConfig();
+            };
 
             table.Controls.Add(actionLabel, 0, rowIndex);
             table.Controls.Add(textBox, 1, rowIndex);
             table.Controls.Add(resetButton, 2, rowIndex);
+
+            createdTextBox = textBox;
         }
+
+        /// <summary>
+        /// Captures the key combination pressed while a hotkey textbox has focus,
+        /// so users type the actual keys rather than typing text manually.
+        /// </summary>
+        private void HotkeyTextBox_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (sender is not TextBox textBox) return;
+
+            e.SuppressKeyPress = true;
+            e.Handled = true;
+
+            if (e.KeyCode is Keys.ControlKey or Keys.ShiftKey or Keys.Menu or Keys.LWin or Keys.RWin)
+            {
+                return;
+            }
+
+            var parts = new List<string>();
+            if (e.Control) parts.Add("Ctrl");
+            if (e.Alt) parts.Add("Alt");
+            if (e.Shift) parts.Add("Shift");
+
+            if (parts.Count == 0)
+            {
+                // Require at least one modifier for a global hotkey
+                return;
+            }
+
+            parts.Add(e.KeyCode.ToString());
+            textBox.Text = string.Join(" + ", parts);
+        }
+
+        private void HotkeyTextBox_Leave(object? sender, EventArgs e)
+        {
+            SaveHotkeysToConfig();
+        }
+
+        private void LoadHotkeysFromConfig()
+        {
+            if (_configManager == null) return;
+            var hotkeys = _configManager.GetConfig().Hotkeys;
+
+            _resetHotkeyBox.Text = hotkeys.ResetHotkey;
+            _launchHotkeyBox.Text = hotkeys.LaunchHotkey;
+            _lightHotkeyBox.Text = hotkeys.LightThemeHotkey;
+            _darkHotkeyBox.Text = hotkeys.DarkThemeHotkey;
+            _emergencyHotkeyBox.Text = hotkeys.EmergencyResetHotkey;
+        }
+
+        private void SaveHotkeysToConfig()
+        {
+            if (_configManager == null) return;
+
+            var hotkeys = _configManager.GetConfig().Hotkeys;
+            hotkeys.ResetHotkey = _resetHotkeyBox.Text.Trim();
+            hotkeys.LaunchHotkey = _launchHotkeyBox.Text.Trim();
+            hotkeys.LightThemeHotkey = _lightHotkeyBox.Text.Trim();
+            hotkeys.DarkThemeHotkey = _darkHotkeyBox.Text.Trim();
+            hotkeys.EmergencyResetHotkey = _emergencyHotkeyBox.Text.Trim();
+            _configManager.Save();
+
+            HotkeysChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Raised whenever hotkey text is committed, so MainForm can re-register
+        /// global hotkeys immediately without requiring an app restart.
+        /// </summary>
+        public event EventHandler? HotkeysChanged;
 
         private TabPage CreateAdvancedTab()
         {
@@ -382,7 +426,7 @@ namespace ResolutionSwitcher.Main
             {
                 Name = "_safeModeCheckBox",
                 Text = "Enable safe mode fallback",
-                Checked = true,
+                Checked = _configManager?.GetConfig().Behavior.SafeModeEnabled ?? true,
                 AutoSize = true
             };
             _safeModeCheckBox.CheckedChanged += SafeModeCheckBox_CheckedChanged;
@@ -419,9 +463,10 @@ namespace ResolutionSwitcher.Main
             {
                 Name = "_crashRecoveryCheckBox",
                 Text = "Enable crash recovery",
-                Checked = true,
+                Checked = _configManager?.GetConfig().Behavior.CrashRecoveryEnabled ?? true,
                 AutoSize = true
             };
+            _crashRecoveryCheckBox.CheckedChanged += CrashRecoveryCheckBox_CheckedChanged;
 
             _crashRecoveryHintLabel = new Label
             {
@@ -498,6 +543,12 @@ namespace ResolutionSwitcher.Main
 
         private void SafeModeCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
+            if (_configManager != null)
+            {
+                _configManager.GetConfig().Behavior.SafeModeEnabled = _safeModeCheckBox.Checked;
+                _configManager.Save();
+            }
+
             if (!_safeModeCheckBox.Checked)
             {
                 return;
@@ -508,6 +559,13 @@ namespace ResolutionSwitcher.Main
                 "Safe Mode Fallback",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
+        }
+
+        private void CrashRecoveryCheckBox_CheckedChanged(object? sender, EventArgs e)
+        {
+            if (_configManager == null) return;
+            _configManager.GetConfig().Behavior.CrashRecoveryEnabled = _crashRecoveryCheckBox.Checked;
+            _configManager.Save();
         }
 
         private void ThemeManager_ThemeChanged(object? sender, EventArgs e)

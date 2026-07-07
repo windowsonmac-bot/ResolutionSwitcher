@@ -223,17 +223,10 @@ namespace ResolutionSwitcher.Main
             {
                 try
                 {
-                    var logPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "resolutionswitcher.log");
-                    if (System.IO.File.Exists(logPath))
-                    {
-                        System.IO.File.Delete(logPath);
-                        actions.AppendLine("✓ Log file deleted");
-                    }
-                    else
-                    {
-                        actions.AppendLine("- Log file not found");
-                    }
+                    var logPath = Logger.Instance.LogPath;
+                    bool existed = System.IO.File.Exists(logPath);
                     Logger.Instance.ClearLog();
+                    actions.AppendLine(existed ? "✓ Log file deleted" : "- Log file not found");
                 }
                 catch (Exception ex)
                 {
