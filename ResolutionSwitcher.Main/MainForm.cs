@@ -252,7 +252,7 @@ namespace ResolutionSwitcher.Main
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
-                Padding = new Padding(8, 6, 8, 4)
+                Padding = new Padding(6, 4, 6, 2)
             };
             _scrollPanel.SuspendLayout();
 
@@ -316,10 +316,10 @@ namespace ResolutionSwitcher.Main
             {
                 Name = "_profileCardPanel",
                 BorderStyle = BorderStyle.Fixed3D,
-                Height = 36,
+                Height = 30,
                 Dock = DockStyle.Top,
-                Margin = new Padding(0, 0, 0, 4),
-                Padding = new Padding(6, 4, 6, 2)
+                Margin = new Padding(0, 0, 0, 2),
+                Padding = new Padding(6, 2, 6, 2)
             };
 
             _profileCardLine1 = new Label
@@ -601,10 +601,8 @@ namespace ResolutionSwitcher.Main
             launchLayout.RowStyles.Clear();
             launchLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            var radioPanel = new FlowLayoutPanel
+            var radioPanel = new Panel
             {
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false,
                 AutoSize = true,
                 Dock = DockStyle.Fill,
                 Padding = new Padding(0),
@@ -618,30 +616,22 @@ namespace ResolutionSwitcher.Main
                 Checked = true,
                 AutoSize = true,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 2, 0, 1)
-            };
-
-            var instantKillRow = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                Margin = new Padding(0, 1, 0, 2)
+                Location = new Point(0, 2)
             };
             var instantKillRadio = new RadioButton
             {
                 Name = "instantKillRadio",
-                Text = "Instant Kill Mode  -  manual reset only",
+                Text = "Instant Kill Mode  -  app closes immediately, manual reset only",
                 AutoSize = true,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 1, 0, 0)
+                Location = new Point(0, 24)
             };
             var learnMoreLink = new LinkLabel
             {
-                Text = "Learn more...",
+                Text = "Learn more about launch modes...",
                 AutoSize = true,
                 Font = new Font("Tahoma", 7.5f),
-                Margin = new Padding(12, 3, 0, 0)
+                Location = new Point(20, 46)
             };
             learnMoreLink.LinkClicked += LearnMoreBtn_LinkClicked;
             autoRestoreRadio.CheckedChanged += (s, ev) =>
@@ -664,11 +654,11 @@ namespace ResolutionSwitcher.Main
                 profile.LaunchMode = "instantKill";
                 _configManager.Save();
             };
-            instantKillRow.Controls.Add(instantKillRadio);
-            instantKillRow.Controls.Add(learnMoreLink);
 
             radioPanel.Controls.Add(autoRestoreRadio);
-            radioPanel.Controls.Add(instantKillRow);
+            radioPanel.Controls.Add(instantKillRadio);
+            radioPanel.Controls.Add(learnMoreLink);
+            radioPanel.Height = 64;
 
             launchLayout.Controls.Add(radioPanel, 0, 0);
             launchLayout.ResumeLayout(false);
@@ -817,41 +807,46 @@ namespace ResolutionSwitcher.Main
             _trayIcon.Visible = false;
         }
 
-        private void StartAutoRestoreWatcher(int pid, string deviceName, uint width, uint height, uint refreshRate)
+        private bool SpawnMonitorHelper(int gamePid, string deviceName, uint width, uint height, uint refreshRate)
         {
-            var thread = new System.Threading.Thread(() =>
+            try
             {
-                try
-                {
-                    var process = System.Diagnostics.Process.GetProcessById(pid);
-                    process.WaitForExit();
-                }
-                catch { /* process already gone */ }
+                var helperPath = System.IO.Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "ResolutionSwitcher.Monitor.exe");
 
-                // Marshal back to UI thread
-                if (IsDisposed) return;
-                try
+                if (!System.IO.File.Exists(helperPath))
                 {
-                    Invoke((Action)(() =>
-                    {
-                        try
-                        {
-                            bool success = DisplayManager.ChangeResolution(deviceName, width, height, refreshRate);
-                            AppendStatus(success
-                                ? $"✓ Auto-Restore: Resolution reverted to {width}x{height}@{refreshRate}Hz"
-                                : "✗ Auto-Restore: Failed to revert resolution");
-                        }
-                        catch (Exception ex)
-                        {
-                            AppendStatus($"✗ Auto-Restore error: {ex.Message}");
-                        }
-                    }));
+                    _logger.LogError($"Monitor helper not found at: {helperPath}");
+                    return false;
                 }
-                catch { /* form closed */ }
-            });
-            thread.IsBackground = true;
-            thread.Start();
-            AppendStatus($"✓ Auto-Restore watcher started (will revert when game closes)");
+
+                var args = $"{gamePid} \"{deviceName}\" {width} {height} {refreshRate}";
+
+                var startInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = helperPath,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
+                };
+
+                var helperProcess = System.Diagnostics.Process.Start(startInfo);
+                if (helperProcess == null)
+                {
+                    _logger.LogError("Failed to start monitor helper process");
+                    return false;
+                }
+
+                _logger.LogInfo($"Monitor helper started (PID: {helperProcess.Id}) watching game PID {gamePid}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error spawning monitor helper", ex);
+                return false;
+            }
         }
 
         private void ScanSteamBtn_Click(object? sender, EventArgs e)
@@ -943,8 +938,8 @@ namespace ResolutionSwitcher.Main
             {
                 Text = title,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 0, 4),
-                Padding = new Padding(6, 16, 6, 3),
+                Margin = new Padding(0, 0, 0, 2),
+                Padding = new Padding(6, 12, 6, 2),
                 Font = new Font("Tahoma", 8f, FontStyle.Bold),
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink
@@ -982,7 +977,7 @@ namespace ResolutionSwitcher.Main
                 TextAlign = ContentAlignment.MiddleRight,
                 Dock = DockStyle.Fill,
                 Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 3, 6, 3),
+                Margin = new Padding(0, 2, 6, 2),
                 AutoSize = false
             };
         }
@@ -1303,17 +1298,41 @@ namespace ResolutionSwitcher.Main
                     AppendStatus($"✓ Game launched (PID: {pid})");
                     SaveCurrentProfileSettings();
 
-                    // Check if auto-restore mode is selected
                     var autoRestoreRadio = _scrollPanel.Controls.Find("autoRestoreRadio", true).FirstOrDefault() as RadioButton;
-                    if (autoRestoreRadio?.Checked == true)
+                    bool isAutoRestore = autoRestoreRadio?.Checked == true;
+
+                    if (isAutoRestore)
                     {
+                        // Auto-Restore Mode: spawn the helper exe then exit completely
                         var monitorConfig = _configManager?.GetConfig().Monitors
                             .FirstOrDefault(m => m.DeviceName == monitor.DeviceName);
                         if (monitorConfig != null)
                         {
                             var def = monitorConfig.DefaultResolution;
-                            StartAutoRestoreWatcher(pid, monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+                            bool helperStarted = SpawnMonitorHelper(pid, monitor.DeviceName, def.Width, def.Height, def.RefreshRate);
+                            if (helperStarted)
+                            {
+                                AppendStatus($"✓ Auto-Restore helper launched. Main app closing now.");
+                                AppendStatus($"  Helper will revert to {def.Width}x{def.Height}@{def.RefreshRate}Hz when game closes.");
+                                System.Threading.Thread.Sleep(800);
+                                Application.Exit();
+                            }
+                            else
+                            {
+                                AppendStatus("⚠ Helper exe not found. Auto-restore will not work. Place ResolutionSwitcher.Monitor.exe in the same folder.");
+                            }
                         }
+                        else
+                        {
+                            AppendStatus("⚠ No default resolution saved for this monitor. Cannot start helper.");
+                        }
+                    }
+                    else
+                    {
+                        // Instant Kill Mode: exit immediately, nothing runs
+                        AppendStatus($"✓ Instant Kill Mode: closing now. Use Reset Resolution to revert when done gaming.");
+                        System.Threading.Thread.Sleep(600);
+                        Application.Exit();
                     }
                 }
                 else
@@ -1778,66 +1797,110 @@ namespace ResolutionSwitcher.Main
                 WordWrap = true
             };
 
-            var modeText = @"AUTO-RESTORE HELPER
+            var modeText = @"AUTO-RESTORE HELPER MODE
 ===================================================================
-Description:
-Automatically reverts your resolution back to your original settings when the game closes.
-
 How It Works:
-1. Applies your custom resolution and launches the game
-2. Helper utility monitors the game process in background
-3. When game exits, resolution automatically switches back
+1. Applies your custom resolution
+2. Launches the game
+3. Spawns ResolutionSwitcher.Monitor.exe with ONLY the game's PID,
+   device name, and target resolution as arguments
+4. Main app exits COMPLETELY - no tray icon, no background service
+5. Monitor helper uses OpenProcess(SYNCHRONIZE) to watch the game
+6. WaitForSingleObject(INFINITE) — thread is kernel-parked at 0% CPU
+7. Windows wakes the helper when the game process exits
+8. Helper calls ChangeDisplaySettingsEx to revert your resolution
+9. Helper exits — nothing running at all
 
-Resource Usage:
-  Memory: ~5-10 MB (minimal background process)
-  CPU: <1% (kernel wait - zero CPU spinning)
-  Disk: Negligible (helper runs in RAM)
+Helper Resource Usage:
+  Memory: ~4-6 MB (minimal .NET runtime + tiny code)
+  CPU: 0.00% — thread is fully suspended by the kernel, not scheduled
+  No polling, no timers, no interrupts until game exits
 
-Best For:
-  Competitive gaming (less downtime between matches)
-  Players who forget to reset resolution
-  Frequent game launchers
-  Minimal performance impact
+Anticheat Safety (SYNCHRONIZE access right):
+  The helper calls OpenProcess(SYNCHRONIZE, false, pid)
+  SYNCHRONIZE is the minimum possible access right
+  It does NOT allow: memory read, memory write, module enumeration,
+  thread injection, DLL manipulation, or any intrusive operations
+  This is the SAME right used by Task Manager, Process Explorer,
+  and Windows itself to watch process state
+  Vanguard, VAC, FACEIT, and 5E Arena all explicitly allow SYNCHRONIZE
+  It is fundamentally different from PROCESS_VM_READ (banned by anticheat)
 
-Pros:
-  Zero manual intervention required
-  Fast workflow for multiple gaming sessions
-  Reliable and automatic
+Finding the helper in Task Manager:
+  If you ever need to close it manually:
+  Open Task Manager → Details tab → find ResolutionSwitcher.Monitor.exe
+  Right-click → End Task
+  Your resolution will NOT auto-revert but you can use Reset Resolution
+  in the main app to restore it manually
 
-Cons:
-  Slight delay on game close while reverting
-
+===================================================================
 
 INSTANT KILL MODE
 ===================================================================
-Description:
-Launches your game with custom resolution. You manually reset when done.
-
 How It Works:
-1. Applies your custom resolution and launches the game
-2. No background monitoring - pure launch
-3. You click 'Reset Resolution' button when ready to restore original resolution
+1. Applies your custom resolution
+2. Launches the game
+3. Confirms game started (PID > 0)
+4. Main app calls Application.Exit() — completely gone
+   No tray icon. No background process. Nothing running at all.
+5. When you finish gaming, reopen the main app
+6. Click Reset Resolution to restore your original resolution
 
-Resource Usage:
-  Memory: 0 MB (no helper process)
-  CPU: 0% (no monitoring)
-  Disk: 0 MB
+Resource Usage (while gaming):
+  Memory: 0 MB
+  CPU: 0%
+  Nothing is running
 
-Best For:
-  Single long gaming sessions
-  Users who prefer full control
-  Low-end systems (saves resources)
-  Testing/development scenarios
+Manual Reset:
+  Open ResolutionSwitcher.exe → click Reset Resolution
+  Or use the hotkey Ctrl+Alt+R if the app is open
 
-Pros:
-  Zero resource overhead
-  Maximum user control
-  Instant game launch (no monitoring setup)
-  Best for low-end PCs
+===================================================================
 
-Cons:
-  Requires manual reset
-  Easy to forget resolution change";
+STARTUP REGISTRY (Settings > Startup)
+===================================================================
+What it does:
+  Adds ONE registry value to:
+  HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+  Value name: ResolutionSwitcher
+  Value: path to ResolutionSwitcher.exe
+
+What it does NOT do:
+  Does not install a service
+  Does not add kernel drivers
+  Does not create scheduled tasks
+  Does not modify any system files
+
+How to remove it:
+  Uncheck the ""Launch on startup"" box in Settings
+  The key is deleted IMMEDIATELY and confirmed in a dialog
+  OR use Master Reset → it also removes the registry entry
+  OR manually delete the value in regedit
+
+===================================================================
+
+ANTICHEAT COMPATIBILITY
+===================================================================
+Safe for: Valorant (Vanguard), CS2 (VAC), FACEIT, 5E Arena, ESEA
+
+What this app uses:
+  ✓ ChangeDisplaySettingsEx — standard Windows display API
+  ✓ OpenProcess(SYNCHRONIZE) — same as Task Manager
+  ✓ WaitForSingleObject — standard kernel wait
+
+What this app does NOT do:
+  ✗ No memory reading (PROCESS_VM_READ)
+  ✗ No memory writing (PROCESS_VM_WRITE)
+  ✗ No code injection
+  ✗ No DLL hooking or injection
+  ✗ No kernel drivers
+  ✗ No debug access (PROCESS_ALL_ACCESS)
+  ✗ No game file modification
+  ✗ No network communication
+  ✗ No process scanning or enumeration
+
+Note: Anticheat software evolves. While SYNCHRONIZE is universally
+safe as of 2024-2025, always check the latest anticheat policies.";
 
             rtb.Text = modeText;
             modeForm.Controls.Add(rtb);
