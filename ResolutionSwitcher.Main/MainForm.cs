@@ -807,6 +807,18 @@ namespace ResolutionSwitcher.Main
             _trayIcon.Visible = false;
         }
 
+        private void ExitAfterDelay(int milliseconds)
+        {
+            var timer = new Timer { Interval = milliseconds };
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                Application.Exit();
+            };
+            timer.Start();
+        }
+
         private bool SpawnMonitorHelper(int gamePid, string deviceName, uint width, uint height, uint refreshRate)
         {
             try
@@ -1314,8 +1326,7 @@ namespace ResolutionSwitcher.Main
                             {
                                 AppendStatus($"✓ Auto-Restore helper launched. Main app closing now.");
                                 AppendStatus($"  Helper will revert to {def.Width}x{def.Height}@{def.RefreshRate}Hz when game closes.");
-                                System.Threading.Thread.Sleep(800);
-                                Application.Exit();
+                                ExitAfterDelay(800);
                             }
                             else
                             {
@@ -1331,8 +1342,7 @@ namespace ResolutionSwitcher.Main
                     {
                         // Instant Kill Mode: exit immediately, nothing runs
                         AppendStatus($"✓ Instant Kill Mode: closing now. Use Reset Resolution to revert when done gaming.");
-                        System.Threading.Thread.Sleep(600);
-                        Application.Exit();
+                        ExitAfterDelay(600);
                     }
                 }
                 else
