@@ -6,3 +6,4 @@ ResolutionSwitcher.Monitor/bin/
 *.user
 publish/
 publish-test/
+*.zip
