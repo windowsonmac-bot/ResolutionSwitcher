@@ -133,7 +133,7 @@ namespace ResolutionSwitcher.Main
 
             _startupHintLabel = new Label
             {
-                Text = "Adds one registry key. Removed automatically if app folder is deleted.",
+                Text = "Check = adds registry key. Uncheck = immediately removes it. No hidden state.",
                 AutoSize = true,
                 Font = new Font("Tahoma", 7f, FontStyle.Italic),
                 Margin = new Padding(16, 0, 0, 0)
@@ -472,13 +472,25 @@ namespace ResolutionSwitcher.Main
 
         private void StartupCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
-            SetStartupEnabled(_startupCheckBox.Checked);
-            // Show info message only when enabling for the first time
+            const string registryPath = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run";
+            const string valueName = "ResolutionSwitcher";
+
             if (_startupCheckBox.Checked)
             {
+                SetStartupEnabled(true);
+                var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "(unknown)";
                 MessageBox.Show(
-                    "ResolutionSwitcher will now launch automatically when Windows starts.\n\nA registry entry has been added to:\nHKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                    $"✓ Startup entry ADDED.\n\nRegistry key written:\n{registryPath}\nValue name: {valueName}\nValue: \"{exePath}\"\n\nTo undo: uncheck this box at any time.\nThe key will be deleted immediately.",
                     "Startup Enabled",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                SetStartupEnabled(false);
+                MessageBox.Show(
+                    $"✓ Startup entry REMOVED.\n\nRegistry key deleted:\n{registryPath}\\{valueName}\n\nResolutionSwitcher will no longer launch on Windows startup.\nNo registry entries remain.",
+                    "Startup Disabled",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
