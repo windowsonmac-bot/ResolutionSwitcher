@@ -44,6 +44,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "Safe Mode Fallback";
+            Icon = IconProvider.AppIcon;
             Width = 460;
             Height = 260;
             StartPosition = FormStartPosition.CenterScreen;

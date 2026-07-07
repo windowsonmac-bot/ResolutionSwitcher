@@ -17,6 +17,7 @@
     <Version>1.0.0</Version>
     <Authors>windowsonmac</Authors>
     <Description>Lightweight resolution switcher for competitive gaming</Description>
+    <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

@@ -16,6 +16,13 @@ namespace ResolutionSwitcher.Main
         private readonly string _configPath;
         private static readonly Logger _logger = Logger.Instance;
 
+        /// <summary>
+        /// The names of the three built-in profiles that ship with the app.
+        /// Used both when first populating an empty profile list and when
+        /// restoring defaults via Master Reset.
+        /// </summary>
+        public static readonly string[] DefaultProfileNames = { "Gaming", "Streaming", "Productivity" };
+
         public class MonitorConfig
         {
             [JsonProperty("id")]
@@ -331,7 +338,7 @@ namespace ResolutionSwitcher.Main
             try
             {
                 _logger.LogInfo("Factory reset initiated");
-                
+
                 if (File.Exists(_configPath))
                 {
                     File.Delete(_configPath);
@@ -340,7 +347,7 @@ namespace ResolutionSwitcher.Main
 
                 _config = new Config();
                 Logger.Instance.ClearLog();
-                
+
                 _logger.LogSuccess("Factory reset complete");
             }
             catch (Exception ex)
@@ -348,6 +355,47 @@ namespace ResolutionSwitcher.Main
                 _logger.LogError("Error during factory reset", ex);
                 throw new Exception($"Error during factory reset: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Removes all existing profiles and recreates the three built-in default
+        /// profiles (Gaming, Streaming, Productivity). Used by Master Reset so the
+        /// defaults come back even if the user previously deleted them.
+        /// </summary>
+        public void ResetProfilesToDefaults()
+        {
+            _logger.LogInfo("Resetting profiles to defaults");
+            _config.Profiles.Clear();
+            foreach (var name in DefaultProfileNames)
+            {
+                _config.Profiles.Add(new GameProfile { Name = name });
+            }
+            Save();
+            _logger.LogSuccess("Profiles reset to defaults");
+        }
+
+        /// <summary>
+        /// Clears the saved per-monitor default resolution/refresh rate entries.
+        /// The monitor list itself is left intact; defaults are re-populated the
+        /// next time monitors are (re)detected.
+        /// </summary>
+        public void ClearMonitorDefaults()
+        {
+            _logger.LogInfo("Clearing saved monitor defaults");
+            _config.Monitors.Clear();
+            Save();
+            _logger.LogSuccess("Monitor defaults cleared");
+        }
+
+        /// <summary>
+        /// Restores all global hotkeys to their factory default combinations.
+        /// </summary>
+        public void ResetHotkeysToDefaults()
+        {
+            _logger.LogInfo("Resetting hotkeys to defaults");
+            _config.Hotkeys = new HotkeyConfig();
+            Save();
+            _logger.LogSuccess("Hotkeys reset to defaults");
         }
 
         public Config GetConfig() => _config;

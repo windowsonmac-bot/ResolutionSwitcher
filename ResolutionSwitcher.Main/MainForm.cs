@@ -43,6 +43,7 @@ namespace ResolutionSwitcher.Main
         private TextBox _widthInput = null!;
         private TextBox _heightInput = null!;
         private bool _suppressPresetSync = false;
+        private string? _activeProfileName;
         private TextBox _gamePathInput = null!;
         private NotifyIcon _trayIcon = null!;
 
@@ -81,6 +82,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher v1.0";
+            Icon = IconProvider.AppIcon;
             ClientSize = new Size(820, 860);
             MinimumSize = new Size(630, 700);
             StartPosition = FormStartPosition.CenterScreen;
@@ -292,12 +294,14 @@ namespace ResolutionSwitcher.Main
                 Width = 180,
                 Margin = new Padding(0)
             };
-            _profileDropdown.Items.AddRange(new object[] { "Gaming", "Streaming", "Productivity" });
+            _profileDropdown.Items.AddRange(ConfigManager.DefaultProfileNames);
             _profileDropdown.SelectedIndex = 0;
 
-            var newProfileBtn = new Button { Text = "+ New", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
-            var deleteProfileBtn = new Button { Text = "Delete", Width = 58, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
+            var newProfileBtn = new Button { Text = "+ New", Width = 52, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
+            var saveProfileBtn = new Button { Text = "Save", Width = 48, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
+            var deleteProfileBtn = new Button { Text = "Delete", Width = 52, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
             newProfileBtn.Click += NewProfileBtn_Click;
+            saveProfileBtn.Click += SaveProfileBtn_Click;
             deleteProfileBtn.Click += DeleteProfileBtn_Click;
             _profileDropdown.SelectedIndexChanged += ProfileDropdown_SelectedIndexChanged;
 
@@ -312,6 +316,7 @@ namespace ResolutionSwitcher.Main
             };
             profileFlow.Controls.Add(_profileDropdown);
             profileFlow.Controls.Add(newProfileBtn);
+            profileFlow.Controls.Add(saveProfileBtn);
             profileFlow.Controls.Add(deleteProfileBtn);
 
             profileLayout.Controls.Add(MakeLabel("Profile:"), 0, 0);
@@ -740,7 +745,7 @@ namespace ResolutionSwitcher.Main
             _trayIcon = new NotifyIcon
             {
                 Text = "ResolutionSwitcher",
-                Icon = SystemIcons.Application,
+                Icon = IconProvider.AppIcon,
                 Visible = false
             };
 
@@ -1072,8 +1077,13 @@ namespace ResolutionSwitcher.Main
 
             _gamePathInput.Text = path;
             SaveSteamGameToProfile(selected);
-            AppendStatus($"✓ Game set from Steam: {selected.Name} (AppID: {selected.AppId})");
-            _logger.LogInfo($"Steam game selected: {selected.Name} -> {path} (AppID: {selected.AppId})");
+
+            var launchMethodDropdown = _scrollPanel.Controls.Find("launchMethodDropdown", true).FirstOrDefault() as ComboBox;
+            if (launchMethodDropdown != null && launchMethodDropdown.Items.Contains("Steam (App ID)"))
+                launchMethodDropdown.SelectedItem = "Steam (App ID)";
+
+            AppendStatus($"✓ Game set from Steam: {selected.Name} (AppID: {selected.AppId}) — will launch via Steam");
+            _logger.LogInfo($"Steam game selected: {selected.Name} -> {path} (AppID: {selected.AppId}), launch method set to Steam (App ID)");
         }
 
         private GroupBox MakeGroup(string title)
@@ -1366,6 +1376,8 @@ namespace ResolutionSwitcher.Main
                 LoadProfilesIntoDropdown();
                 AppendStatus("Ready.");
                 _logger.LogSuccess("Main application initialized successfully");
+
+                CreateDesktopShortcutOnFirstRun();
             }
             catch (Exception ex)
             {
@@ -1396,6 +1408,45 @@ namespace ResolutionSwitcher.Main
                 : "⚠ Crash Recovery: previous session did not exit cleanly, but revert failed.");
 
             ClearPendingRevertMarker();
+        }
+
+        /// <summary>
+        /// First-run convenience: if this Windows user has never had the desktop
+        /// shortcut offered before, create it silently. This makes a plain copy of
+        /// the published app folder behave like a lightweight "installer" - the
+        /// person who receives it just runs the exe once and gets a normal desktop
+        /// icon, without needing a separate setup/installer step.
+        /// Tracked per-user in the registry (not config.json) so handing the folder
+        /// to someone else results in a real first run for them too.
+        /// </summary>
+        private void CreateDesktopShortcutOnFirstRun()
+        {
+            try
+            {
+                if (!ShortcutManager.IsFirstRunForThisUser())
+                {
+                    return;
+                }
+
+                if (!ShortcutManager.DesktopShortcutExists())
+                {
+                    if (ShortcutManager.CreateDesktopShortcut(out var error))
+                    {
+                        AppendStatus("Desktop shortcut created.");
+                        _logger.LogSuccess("Desktop shortcut created automatically on first run.");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Could not auto-create desktop shortcut on first run: {error}");
+                    }
+                }
+
+                ShortcutManager.MarkFirstRunHandled();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error during first-run desktop shortcut creation", ex);
+            }
         }
 
         /// <summary>
@@ -1772,8 +1823,34 @@ namespace ResolutionSwitcher.Main
         private void MasterResetBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Master Reset clicked");
-            using var masterResetForm = new MasterResetForm();
+            using var masterResetForm = new MasterResetForm(_configManager);
+            masterResetForm.ResetCompleted += (_, _) => RefreshUIAfterMasterReset();
             masterResetForm.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// Reloads live UI state after a Master Reset so profiles, hotkeys, and
+        /// monitor defaults reflect the reset immediately without an app restart.
+        /// </summary>
+        private void RefreshUIAfterMasterReset()
+        {
+            if (_configManager == null) return;
+
+            // Monitor defaults may have been cleared - InitializeFromDetectedMonitors
+            // only populates when the list is empty, so this is a no-op otherwise.
+            _configManager.InitializeFromDetectedMonitors(_detectedMonitors);
+
+            if (_detectedMonitors.Count > 0)
+            {
+                var primary = _detectedMonitors.FirstOrDefault(m => m.IsPrimary) ?? _detectedMonitors[0];
+                _monitorDefaultLabel.Text = $"Default: {primary.Width} x {primary.Height} @ {primary.RefreshRate} Hz";
+            }
+
+            _activeProfileName = null;
+            LoadProfilesIntoDropdown();
+            RegisterAllHotkeys();
+
+            AppendStatus("✓ Master Reset applied. Profiles, hotkeys, and monitor defaults refreshed.");
         }
 
         private void AboutBtn_Click(object? sender, EventArgs e)
@@ -1816,6 +1893,10 @@ namespace ResolutionSwitcher.Main
             profile.GameName = string.IsNullOrEmpty(game.Name) ? Path.GetFileNameWithoutExtension(game.ExePath) : game.Name;
             profile.LaunchPath = game.ExePath;
             profile.SteamAppId = game.AppId;
+            // Games discovered via Steam scan must launch through Steam itself
+            // (steam://run/{appid}); otherwise the launcher falls back to directly
+            // executing LaunchPath, which may be a bundled tool exe rather than the game.
+            profile.LaunchMethod = "Steam (App ID)";
             _configManager.Save();
         }
 
@@ -1892,11 +1973,11 @@ namespace ResolutionSwitcher.Main
 
             if (_profileDropdown.Items.Count == 0)
             {
-                _profileDropdown.Items.AddRange(new object[] { "Gaming", "Streaming", "Productivity" });
-                foreach (string name in new[] { "Gaming", "Streaming", "Productivity" })
+                foreach (var name in ConfigManager.DefaultProfileNames)
                 {
                     if (!config.Profiles.Any(p => p.Name == name))
                         config.Profiles.Add(new ConfigManager.GameProfile { Name = name });
+                    _profileDropdown.Items.Add(name);
                 }
                 _configManager.Save();
             }
@@ -1912,6 +1993,17 @@ namespace ResolutionSwitcher.Main
                 _suppressPresetSync = false;
             }
 
+            // The handler is detached above, so the initial selection above never fires
+            // ProfileDropdown_SelectedIndexChanged. Sync the UI for the initial profile
+            // explicitly, otherwise its saved monitor/resolution/game settings are never
+            // reflected on startup.
+            var activeProfile = GetActiveProfile(config);
+            _activeProfileName = activeProfile?.Name;
+            if (activeProfile != null)
+            {
+                LoadProfileIntoUI(activeProfile);
+            }
+
             _profileDropdown.SelectedIndexChanged += ProfileDropdown_SelectedIndexChanged;
         }
 
@@ -1922,6 +2014,18 @@ namespace ResolutionSwitcher.Main
             var profile = GetActiveProfile(config);
             if (profile == null) return;
 
+            SaveSettingsToProfile(profile);
+            _configManager.Save();
+        }
+
+        /// <summary>
+        /// Copies the currently-selected Monitor and Resolution (width/height/Hz)
+        /// UI values into the given profile. Does not save the config itself -
+        /// callers are responsible for calling ConfigManager.Save() once they are
+        /// done batching changes.
+        /// </summary>
+        private void SaveSettingsToProfile(ConfigManager.GameProfile profile)
+        {
             var monitor = GetSelectedMonitor();
             if (monitor != null)
                 profile.TargetMonitorId = monitor.Id;
@@ -1937,9 +2041,7 @@ namespace ResolutionSwitcher.Main
                 };
             }
             catch (InvalidOperationException) { /* ignore parse errors during save */ }
-            catch (Exception ex) { _logger.LogError("SaveCurrentProfileSettings error", ex); }
-
-            _configManager.Save();
+            catch (Exception ex) { _logger.LogError("SaveSettingsToProfile error", ex); }
         }
 
         private void NewProfileBtn_Click(object? sender, EventArgs e)
@@ -2000,6 +2102,8 @@ namespace ResolutionSwitcher.Main
             if (profile != null) config.Profiles.Remove(profile);
             _configManager.Save();
 
+            if (name == _activeProfileName) _activeProfileName = null;
+
             _profileDropdown.Items.Remove(name);
             if (_profileDropdown.Items.Count > 0)
                 _profileDropdown.SelectedIndex = 0;
@@ -2007,23 +2111,89 @@ namespace ResolutionSwitcher.Main
             AppendStatus($"Profile '{name}' deleted.");
         }
 
+        private void SaveProfileBtn_Click(object? sender, EventArgs e)
+        {
+            var name = _profileDropdown.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                AppendStatus("No profile selected to save.");
+                return;
+            }
+
+            try
+            {
+                SaveCurrentProfileSettings();
+                AppendStatus($"✓ Current settings saved to profile '{name}'.");
+            }
+            catch (Exception ex)
+            {
+                AppendStatus($"✗ Failed to save profile: {ex.Message}");
+                _logger.LogError("SaveProfileBtn_Click error", ex);
+            }
+        }
+
         private void ProfileDropdown_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (_configManager == null) return;
             var config = _configManager.GetConfig();
+
+            // Persist whatever is currently in the UI back into the profile we are
+            // switching away from, so edits are never silently lost when switching.
+            if (!string.IsNullOrEmpty(_activeProfileName))
+            {
+                var outgoingProfile = config.Profiles.FirstOrDefault(p => p.Name == _activeProfileName);
+                if (outgoingProfile != null)
+                {
+                    SaveSettingsToProfile(outgoingProfile);
+                    _configManager.Save();
+                }
+            }
+
             var profile = GetActiveProfile(config);
+            _activeProfileName = profile?.Name;
             if (profile == null) return;
 
+            LoadProfileIntoUI(profile);
+        }
+
+        /// <summary>
+        /// Pushes a profile's saved Monitor, Resolution/Hz, Game, Launch Method, and
+        /// Launch Mode values into the corresponding UI controls. Shared by the
+        /// initial profile load and by profile-switch handling so both stay in sync.
+        /// </summary>
+        private void LoadProfileIntoUI(ConfigManager.GameProfile profile)
+        {
             _suppressPresetSync = true;
             try
             {
+                var monitorIndex = _detectedMonitors.FindIndex(m => m.Id == profile.TargetMonitorId);
+                if (monitorIndex >= 0)
+                {
+                    _monitorDropdown.SelectedIndex = monitorIndex;
+                }
+
                 if (profile.TargetResolution != null && profile.TargetResolution.Width > 0)
                 {
                     _widthInput.Text = profile.TargetResolution.Width.ToString();
                     _heightInput.Text = profile.TargetResolution.Height.ToString();
+
+                    var matchingPreset = FindPresetForResolution(profile.TargetResolution.Width, profile.TargetResolution.Height);
+                    if (matchingPreset != null)
+                        _presetDropdown.SelectedItem = matchingPreset;
+
                     var hzStr = profile.TargetResolution.RefreshRate.ToString();
                     if (_hzDropdown.Items.Contains(hzStr))
+                    {
                         _hzDropdown.SelectedItem = hzStr;
+                    }
+                    else
+                    {
+                        // Saved Hz isn't one of the fixed choices — fall back to Custom.
+                        _hzDropdown.SelectedItem = "Custom...";
+                        _customHzInput.Text = hzStr;
+                        _customHzInput.Visible = true;
+                        _customHzLabel.Visible = true;
+                    }
                 }
                 else
                 {
@@ -2066,6 +2236,26 @@ namespace ResolutionSwitcher.Main
             {
                 _suppressPresetSync = false;
             }
+        }
+
+        /// <summary>
+        /// Finds the preset dropdown entry (if any) whose "WxH" token matches the
+        /// given resolution, so the Preset dropdown visually reflects a profile's
+        /// saved resolution instead of staying on whatever was last picked.
+        /// </summary>
+        private string? FindPresetForResolution(uint width, uint height)
+        {
+            var token = $"{width}x{height}";
+            foreach (var item in _presetDropdown.Items)
+            {
+                if (item is string presetStr
+                    && !presetStr.StartsWith(PresetSeparatorPrefix, StringComparison.Ordinal)
+                    && presetStr.Contains(token, StringComparison.OrdinalIgnoreCase))
+                {
+                    return presetStr;
+                }
+            }
+            return null;
         }
 
         private void LearnMoreBtn_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)

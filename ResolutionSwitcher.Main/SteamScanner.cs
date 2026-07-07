@@ -163,6 +163,30 @@ namespace ResolutionSwitcher.Main
             };
         }
 
+        /// <summary>
+        /// Filename substrings of bundled tool/debug/redistributable executables that are
+        /// commonly shipped alongside the real game binary but are never the correct launch
+        /// target (e.g. Source 2's VConsole2, anti-cheat installers, crash handlers).
+        /// </summary>
+        private static readonly string[] NonGameExeMarkers =
+        {
+            "vconsole", "crashpad", "crashhandler", "crashreporter", "crashreport",
+            "easyanticheat", "eac_launcher", "eac_setup", "battleye", "beservice",
+            "unitycrashhandler", "unins000", "uninstall", "vc_redist", "vcredist",
+            "dotnetfx", "directx", "dxsetup", "dxwebsetup", "redist", "dedicated_server",
+            "srcds", "steamservice", "steamerrorreporter"
+        };
+
+        private static bool IsLikelyNonGameExe(string exePath)
+        {
+            var name = Path.GetFileNameWithoutExtension(exePath).ToLowerInvariant();
+            foreach (var marker in NonGameExeMarkers)
+            {
+                if (name.Contains(marker)) return true;
+            }
+            return false;
+        }
+
         private static string? FindMainExe(string installDir, string gameName)
         {
             try
@@ -175,9 +199,16 @@ namespace ResolutionSwitcher.Main
                 if (exes.Length == 0) return null;
                 if (exes.Length == 1) return exes[0];
 
+                // Exclude known bundled tool/debug/redist binaries before any matching so they
+                // never win the name-similarity or size fallback below (e.g. VConsole2.exe next
+                // to cs2.exe in Source 2 games).
+                var candidates = Array.FindAll(exes, e => !IsLikelyNonGameExe(e));
+                if (candidates.Length == 0) candidates = exes;
+                if (candidates.Length == 1) return candidates[0];
+
                 // Try to match game name
                 var cleanName = Regex.Replace(gameName, @"[^a-zA-Z0-9]", "").ToLower();
-                foreach (var exe in exes)
+                foreach (var exe in candidates)
                 {
                     var exeName = Regex.Replace(Path.GetFileNameWithoutExtension(exe), @"[^a-zA-Z0-9]", "").ToLower();
                     if (exeName.Contains(cleanName) || cleanName.Contains(exeName))
@@ -187,7 +218,7 @@ namespace ResolutionSwitcher.Main
                 // Return the largest exe as likely the main one
                 string? best = null;
                 long bestSize = 0;
-                foreach (var exe in exes)
+                foreach (var exe in candidates)
                 {
                     try
                     {

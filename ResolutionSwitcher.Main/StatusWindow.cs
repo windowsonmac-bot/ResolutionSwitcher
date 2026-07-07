@@ -28,6 +28,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "ResolutionSwitcher Status";
+            Icon = IconProvider.AppIcon;
             Width = 550;
             Height = 400;
             StartPosition = FormStartPosition.CenterScreen;

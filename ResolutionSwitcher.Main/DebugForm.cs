@@ -34,6 +34,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "Debug & Logging";
+            Icon = IconProvider.AppIcon;
             Width = 1100;
             Height = 750;
             MinimumSize = new Size(800, 560);

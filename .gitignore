@@ -4,3 +4,5 @@ ResolutionSwitcher.Monitor/obj/
 ResolutionSwitcher.Monitor/bin/
 .vs/
 *.user
+publish/
+publish-test/

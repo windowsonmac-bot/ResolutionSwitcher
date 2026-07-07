@@ -25,6 +25,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "About ResolutionSwitcher";
+            Icon = IconProvider.AppIcon;
             Width = 720;
             Height = 620;
             MinimumSize = new Size(560, 480);

@@ -8,13 +8,22 @@ namespace ResolutionSwitcher.Main
 {
     public class MasterResetForm : Form
     {
+        private readonly ConfigManager? _configManager;
         private Panel _titlePanel = null!;
         private Label _titleLabel = null!;
         private Label _warningLabel = null!;
         private Button _performResetButton = null!;
 
-        public MasterResetForm()
+        /// <summary>
+        /// Raised after a reset has been performed so the owning MainForm can
+        /// refresh its live UI (profiles, hotkeys, monitor defaults) without
+        /// requiring an app restart.
+        /// </summary>
+        public event EventHandler? ResetCompleted;
+
+        public MasterResetForm(ConfigManager? configManager = null)
         {
+            _configManager = configManager;
             InitializeUI();
             ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
             ApplyTheme();
@@ -31,6 +40,7 @@ namespace ResolutionSwitcher.Main
             SuspendLayout();
 
             Text = "Master Reset";
+            Icon = IconProvider.AppIcon;
             Width = 640;
             Height = 500;
             MinimumSize = new Size(560, 420);
@@ -95,8 +105,9 @@ namespace ResolutionSwitcher.Main
                 AutoSize = true
             };
 
-            optionsFlow.Controls.Add(new CheckBox { Text = "Delete all profiles", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
+            optionsFlow.Controls.Add(new CheckBox { Text = "Delete all profiles (restores the 3 default profiles)", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
             optionsFlow.Controls.Add(new CheckBox { Text = "Clear saved monitor defaults", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
+            optionsFlow.Controls.Add(new CheckBox { Text = "Reset hotkeys to default", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
             optionsFlow.Controls.Add(new CheckBox { Text = "Remove startup registry entry (if set)", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
             optionsFlow.Controls.Add(new CheckBox { Text = "Delete debug log file", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
             optionsFlow.Controls.Add(new CheckBox { Text = "Reset theme to Light mode", Checked = true, AutoSize = true, Font = new Font("Tahoma", 8f) });
@@ -151,7 +162,7 @@ namespace ResolutionSwitcher.Main
         private void PerformButton_Click(object? sender, EventArgs e)
         {
             var result = MessageBox.Show(
-                "Are you sure? This will delete all selected settings and cannot be undone.",
+                "Are you sure? This will reset all selected settings and cannot be undone.",
                 "Confirm Master Reset",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
@@ -174,35 +185,66 @@ namespace ResolutionSwitcher.Main
                 }
             }
 
-            bool deleteProfiles  = checkboxes.Count > 0 && checkboxes[0].Checked;
-            bool clearMonitors   = checkboxes.Count > 1 && checkboxes[1].Checked;
-            bool removeStartup   = checkboxes.Count > 2 && checkboxes[2].Checked;
-            bool deleteLog       = checkboxes.Count > 3 && checkboxes[3].Checked;
-            bool resetTheme      = checkboxes.Count > 4 && checkboxes[4].Checked;
+            bool resetProfiles = checkboxes.Count > 0 && checkboxes[0].Checked;
+            bool clearMonitors = checkboxes.Count > 1 && checkboxes[1].Checked;
+            bool resetHotkeys  = checkboxes.Count > 2 && checkboxes[2].Checked;
+            bool removeStartup = checkboxes.Count > 3 && checkboxes[3].Checked;
+            bool deleteLog     = checkboxes.Count > 4 && checkboxes[4].Checked;
+            bool resetTheme    = checkboxes.Count > 5 && checkboxes[5].Checked;
 
-            // 1. Delete config file (profiles + monitor defaults)
-            if (deleteProfiles || clearMonitors)
+            // Operate on the live ConfigManager when available so MainForm's in-memory
+            // config, dropdowns, and hotkey registrations can be refreshed immediately
+            // afterward instead of requiring an app restart. Fall back to a fresh
+            // instance (which loads/creates config.json on disk) if opened standalone.
+            var configManager = _configManager ?? new ConfigManager();
+            bool configChanged = false;
+
+            // 1. Reset profiles back to the 3 built-in defaults
+            if (resetProfiles)
             {
                 try
                 {
-                    var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-                    if (System.IO.File.Exists(configPath))
-                    {
-                        System.IO.File.Delete(configPath);
-                        actions.AppendLine("✓ Config file deleted (profiles + monitor defaults)");
-                    }
-                    else
-                    {
-                        actions.AppendLine("- Config file not found (already clean)");
-                    }
+                    configManager.ResetProfilesToDefaults();
+                    actions.AppendLine("✓ Profiles reset to defaults (Gaming, Streaming, Productivity)");
+                    configChanged = true;
                 }
                 catch (Exception ex)
                 {
-                    actions.AppendLine($"✗ Failed to delete config: {ex.Message}");
+                    actions.AppendLine($"✗ Failed to reset profiles: {ex.Message}");
                 }
             }
 
-            // 2. Remove startup registry entry
+            // 2. Clear saved monitor defaults
+            if (clearMonitors)
+            {
+                try
+                {
+                    configManager.ClearMonitorDefaults();
+                    actions.AppendLine("✓ Monitor defaults cleared");
+                    configChanged = true;
+                }
+                catch (Exception ex)
+                {
+                    actions.AppendLine($"✗ Failed to clear monitor defaults: {ex.Message}");
+                }
+            }
+
+            // 3. Reset hotkeys to default
+            if (resetHotkeys)
+            {
+                try
+                {
+                    configManager.ResetHotkeysToDefaults();
+                    actions.AppendLine("✓ Hotkeys reset to defaults");
+                    configChanged = true;
+                }
+                catch (Exception ex)
+                {
+                    actions.AppendLine($"✗ Failed to reset hotkeys: {ex.Message}");
+                }
+            }
+
+            // 4. Remove startup registry entry
             if (removeStartup)
             {
                 try
@@ -218,7 +260,7 @@ namespace ResolutionSwitcher.Main
                 }
             }
 
-            // 3. Delete log file
+            // 5. Delete log file
             if (deleteLog)
             {
                 try
@@ -234,15 +276,20 @@ namespace ResolutionSwitcher.Main
                 }
             }
 
-            // 4. Reset theme to light
+            // 6. Reset theme to light
             if (resetTheme)
             {
                 ThemeManager.SetTheme(AppTheme.Light);
                 actions.AppendLine("✓ Theme reset to Light mode");
             }
 
+            if (configChanged)
+            {
+                ResetCompleted?.Invoke(this, EventArgs.Empty);
+            }
+
             MessageBox.Show(
-                actions.ToString() + "\nPlease restart the app for all changes to take effect.",
+                actions.ToString(),
                 "Master Reset Complete",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
