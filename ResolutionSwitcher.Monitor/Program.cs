@@ -17,9 +17,7 @@ static class Program
 
     private const uint SYNCHRONIZE = 0x00100000;
     private const uint INFINITE = 0xFFFFFFFF;
-    private const uint WAIT_OBJECT_0 = 0x00000000;
     private const int CDS_UPDATEREGISTRY = 0x00000001;
-    private const int DISP_CHANGE_SUCCESSFUL = 0;
     private const int ENUM_CURRENT_SETTINGS = -1;
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
@@ -84,8 +82,7 @@ static class Program
 
         try
         {
-            uint result = WaitForSingleObject(hProcess, INFINITE);
-            _ = result == WAIT_OBJECT_0;
+            WaitForSingleObject(hProcess, INFINITE);
         }
         finally
         {
@@ -110,7 +107,7 @@ static class Program
             devMode.dmDisplayFrequency = refreshRate;
             devMode.dmFields = 0x00080000 | 0x00100000 | 0x00400000;
 
-            _ = ChangeDisplaySettingsEx(deviceName, ref devMode, IntPtr.Zero, CDS_UPDATEREGISTRY, IntPtr.Zero) == DISP_CHANGE_SUCCESSFUL;
+            ChangeDisplaySettingsEx(deviceName, ref devMode, IntPtr.Zero, CDS_UPDATEREGISTRY, IntPtr.Zero);
         }
         catch { }
     }
