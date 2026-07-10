@@ -13,9 +13,10 @@
 2. Open `ResolutionSwitcher.sln` in Visual Studio
 3. Right-click the solution → Select "Build Solution" (Ctrl+Shift+B)
 4. Wait for the build to complete
-5. Output files will be in:
+5. For day-to-day debugging (F5), build output lands in:
    - `ResolutionSwitcher.Main\bin\Release\net8.0-windows\win-x64\`
    - `ResolutionSwitcher.Monitor\bin\Release\net8.0-windows\win-x64\`
+6. For a clean, minimal distributable, use `dotnet publish` instead (see "Publishing for Distribution" below) - it produces just a couple of files instead of the full loose-file build tree.
 
 ### Option 2: Command Line
 
@@ -57,14 +58,16 @@ ResolutionSwitcher/
 
 ## Output Structure
 
-After building, you'll have:
+`dotnet publish` (see below) produces a self-contained single-file exe per project, so the distributable folder is just:
 
 ```
 ResolutionSwitcher/
-├── ResolutionSwitcher.exe              # Main application (~45 MB with runtime)
-├── ResolutionSwitcher.Monitor.exe      # Auto-restore helper (~15 MB with runtime)
+├── ResolutionSwitcher.exe              # Main application (single file, self-contained)
+├── ResolutionSwitcher.Monitor.exe      # Auto-restore helper (single file, self-contained)
 └── config.json                         # Auto-created on first run
 ```
+
+A desktop shortcut is created automatically the first time `ResolutionSwitcher.exe` runs, so there's nothing else to install or unpack.
 
 ## Self-Contained Runtime
 
@@ -119,21 +122,18 @@ dotnet build ResolutionSwitcher.sln --configuration Release
 
 ## Publishing for Distribution
 
-To create a standalone folder for sharing:
+To create a standalone folder for sharing, publish the main project only - it automatically
+publishes the Monitor helper too and copies its single-file exe alongside:
 
 ```bash
-# Publish main app
 dotnet publish ResolutionSwitcher.Main/ResolutionSwitcher.Main.csproj `
   -c Release -r win-x64 --self-contained `
-  -o ./publish/main
-
-# Publish monitor app
-dotnet publish ResolutionSwitcher.Monitor/ResolutionSwitcher.Monitor.csproj `
-  -c Release -r win-x64 --self-contained `
-  -o ./publish/monitor
-
-# Copy both .exe files to distribution folder
+  -o ./publish
 ```
+
+The `./publish` folder will contain just `ResolutionSwitcher.exe` and
+`ResolutionSwitcher.Monitor.exe` (both single-file, self-contained) - zip that folder up
+and it's ready to share.
 
 ## Testing
 
@@ -144,8 +144,9 @@ dotnet publish ResolutionSwitcher.Monitor/ResolutionSwitcher.Monitor.csproj `
 ## Notes
 
 - Build time: ~30-60 seconds on first build, ~5-10 seconds thereafter
-- Output size: ~60 MB total (both .exe files with runtime)
+- Published output: 2 files (`ResolutionSwitcher.exe` + `ResolutionSwitcher.Monitor.exe`), ~60-70 MB total (each is self-contained with the .NET 8 runtime bundled in)
 - Runtime: .NET 8 (included, no external dependencies needed)
+- English-only: non-English satellite resource files are excluded from publish via `SatelliteResourceLanguages`
 
 ---
 

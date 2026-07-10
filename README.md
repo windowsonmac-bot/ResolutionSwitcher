@@ -11,7 +11,7 @@ A completely offline, self-contained Windows utility that instantly switches you
 ✅ **Multi-Monitor Support** - Works with any monitor configuration
 ✅ **Game Profiles** - Save different settings per game
 ✅ **Zero System Impact** - No registry modifications, completely portable
-✅ **Lightweight** - 60MB total (includes .NET 8 runtime)
+✅ **Simple Distribution** - Just two self-contained .exe files, no installer, no clutter
 ✅ **Anticheat Safe** - Works with Valorant, CS2, FACEIT, 5E Arena
 ✅ **Optional Debug Logging** - Troubleshooting when needed
 
@@ -19,11 +19,12 @@ A completely offline, self-contained Windows utility that instantly switches you
 
 ### First Run
 
-1. Download the ResolutionSwitcher folder
+1. Download and unzip - you'll only find two files: `ResolutionSwitcher.exe` and `ResolutionSwitcher.Monitor.exe`
 2. Run `ResolutionSwitcher.exe`
-3. App auto-detects your monitors and default resolution
-4. Select your game and target resolution
-5. Click "LAUNCH GAME & APPLY" or "APPLY ONLY"
+3. A desktop shortcut is created automatically the first time you run it
+4. App auto-detects your monitors and default resolution
+5. Select your game and target resolution
+6. Click "LAUNCH GAME & APPLY" or "APPLY ONLY"
 
 ### Two Launch Modes
 
@@ -73,6 +74,7 @@ Click the **?** button in the app for detailed information about:
 - **Instant Kill Mode:** 0% CPU, 0% RAM while gaming
 - **FPS Impact:** Zero (kernel-level waiting, no polling)
 - **Network:** 0 bytes (completely offline)
+- **Disk footprint:** Just 2 files (~60-70 MB combined, self-contained .NET 8 runtime included)
 
 ## Anticheat Safety
 
@@ -92,4 +94,4 @@ For issues or feature requests, check the About section for detailed information
 
 ---
 
-**Version 1.0.0** | Completely Portable | Self-Contained | Zero Bloat
+**Version 1.0.1** | Completely Portable | Self-Contained | Two Files, Zero Clutter

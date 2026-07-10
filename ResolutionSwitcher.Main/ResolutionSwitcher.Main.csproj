@@ -8,16 +8,20 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
     <SelfContained>true</SelfContained>
-    <PublishSingleFile>false</PublishSingleFile>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>embedded</DebugType>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <AssemblyName>ResolutionSwitcher</AssemblyName>
     <RootNamespace>ResolutionSwitcher.Main</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>windowsonmac</Authors>
     <Description>Lightweight resolution switcher for competitive gaming</Description>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,6 +42,32 @@
     <Copy SourceFiles="@(MonitorHelperFiles)"
           DestinationFiles="@(MonitorHelperFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true" />
+  </Target>
+
+  <!--
+    Publish (not just Build) is what triggers PublishSingleFile bundling. A plain
+    ProjectReference only guarantees the Monitor helper gets *built*, so this target
+    explicitly invokes the helper's own Publish target and copies its bundled
+    single-file exe next to the main published exe, keeping the release output to a
+    minimal, easy-to-find file set instead of two full loose-file trees.
+
+    PublishDir is set explicitly on the nested call because dotnet publish -o passes
+    PublishDir as a global property, which would otherwise leak into this nested
+    build and make Monitor publish into Main's output folder instead of its own.
+  -->
+  <Target Name="PublishMonitorHelper" AfterTargets="Publish">
+    <PropertyGroup>
+      <MonitorProjectDir>$(MSBuildThisFileDirectory)..\ResolutionSwitcher.Monitor\</MonitorProjectDir>
+      <MonitorPublishDir>$(MonitorProjectDir)bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\</MonitorPublishDir>
+    </PropertyGroup>
+    <MSBuild Projects="$(MonitorProjectDir)ResolutionSwitcher.Monitor.csproj"
+             Targets="Publish"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);PublishDir=$(MonitorPublishDir);PublishUrl=$(MonitorPublishDir)" />
+    <ItemGroup>
+      <MonitorPublishedFiles Include="$(MonitorPublishDir)ResolutionSwitcher.Monitor.exe" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MonitorPublishedFiles)"
+          DestinationFolder="$(PublishDir)" />
   </Target>
 
 </Project>

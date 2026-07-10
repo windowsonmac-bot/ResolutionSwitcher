@@ -19,6 +19,19 @@ static class Program
     private const uint INFINITE = 0xFFFFFFFF;
     private const int CDS_UPDATEREGISTRY = 0x00000001;
     private const int ENUM_CURRENT_SETTINGS = -1;
+    private const int DISP_CHANGE_SUCCESSFUL = 0;
+
+    // DEVMODE.dmFields bits needed to request a width/height/refresh-rate change.
+    private const uint DM_PELSWIDTH = 0x00080000;
+    private const uint DM_PELSHEIGHT = 0x00100000;
+    private const uint DM_DISPLAYFREQUENCY = 0x00400000;
+
+    // The game may still hold the display in exclusive-fullscreen mode for a brief
+    // window after its process handle is signaled, so the first revert attempt can
+    // fail. Wait briefly, then retry a few times before giving up.
+    private const int SettleDelayMs = 500;
+    private const int RetryDelayMs = 400;
+    private const int MaxRevertAttempts = 5;
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
@@ -74,40 +87,83 @@ static class Program
         if (!uint.TryParse(args[4], out uint refreshRate)) return -1;
 
         IntPtr hProcess = OpenProcess(SYNCHRONIZE, false, gamePid);
-        if (hProcess == IntPtr.Zero)
+        if (hProcess != IntPtr.Zero)
         {
-            RevertResolution(deviceName, width, height, refreshRate);
-            return 0;
-        }
-
-        try
-        {
-            WaitForSingleObject(hProcess, INFINITE);
-        }
-        finally
-        {
-            CloseHandle(hProcess);
+            try
+            {
+                WaitForSingleObject(hProcess, INFINITE);
+            }
+            finally
+            {
+                CloseHandle(hProcess);
+            }
         }
 
         RevertResolution(deviceName, width, height, refreshRate);
         return 0;
     }
 
+    /// <summary>
+    /// Restores the display mode after the game exits. Some fullscreen-exclusive
+    /// games still hold the display for a brief moment after their process handle
+    /// is signaled, so the very first attempt can fail - wait briefly and retry a
+    /// few times, checking the real return code, before giving up.
+    /// </summary>
     private static void RevertResolution(string deviceName, uint width, uint height, uint refreshRate)
+    {
+        System.Threading.Thread.Sleep(SettleDelayMs);
+
+        for (int attempt = 1; attempt <= MaxRevertAttempts; attempt++)
+        {
+            try
+            {
+                var devMode = new DEVMODE();
+                devMode.dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE));
+
+                EnumDisplaySettings(deviceName, ENUM_CURRENT_SETTINGS, ref devMode);
+
+                devMode.dmPelsWidth = width;
+                devMode.dmPelsHeight = height;
+                devMode.dmDisplayFrequency = refreshRate;
+                devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+
+                int result = ChangeDisplaySettingsEx(deviceName, ref devMode, IntPtr.Zero, CDS_UPDATEREGISTRY, IntPtr.Zero);
+                if (result == DISP_CHANGE_SUCCESSFUL)
+                {
+                    return;
+                }
+
+                if (attempt == MaxRevertAttempts)
+                {
+                    LogFailure($"ChangeDisplaySettingsEx failed with code {result} after {attempt} attempt(s) for {deviceName} -> {width}x{height}@{refreshRate}Hz.");
+                }
+            }
+            catch (Exception ex)
+            {
+                if (attempt == MaxRevertAttempts)
+                {
+                    LogFailure($"Exception while reverting {deviceName} -> {width}x{height}@{refreshRate}Hz: {ex.Message}");
+                }
+            }
+
+            if (attempt < MaxRevertAttempts)
+            {
+                System.Threading.Thread.Sleep(RetryDelayMs);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Appends a single diagnostic line to monitor-helper.log next to the exe.
+    /// Only ever called after every revert attempt has failed, so the helper stays
+    /// silent (no disk writes at all) on the normal, successful path.
+    /// </summary>
+    private static void LogFailure(string message)
     {
         try
         {
-            var devMode = new DEVMODE();
-            devMode.dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE));
-
-            EnumDisplaySettings(deviceName, ENUM_CURRENT_SETTINGS, ref devMode);
-
-            devMode.dmPelsWidth = width;
-            devMode.dmPelsHeight = height;
-            devMode.dmDisplayFrequency = refreshRate;
-            devMode.dmFields = 0x00080000 | 0x00100000 | 0x00400000;
-
-            ChangeDisplaySettingsEx(deviceName, ref devMode, IntPtr.Zero, CDS_UPDATEREGISTRY, IntPtr.Zero);
+            var logPath = Path.Combine(AppContext.BaseDirectory, "monitor-helper.log");
+            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
         }
         catch { }
     }
