@@ -2,7 +2,7 @@
 
 **Lightweight resolution switching for competitive gaming**
 
-A completely offline, self-contained Windows utility that instantly switches your monitor to competitive stretching resolutions (4:3, 5:3) and auto-reverts when your game closes.
+A completely offline, self-contained Windows utility that instantly switches your monitor to competitive stretched resolutions (4:3, 5:3) and auto-reverts when your game closes.
 
 ## Features
 
