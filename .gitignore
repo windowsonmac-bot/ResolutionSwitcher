@@ -7,3 +7,4 @@ ResolutionSwitcher.Monitor/bin/
 publish/
 publish-test/
 *.zip
+verify/
