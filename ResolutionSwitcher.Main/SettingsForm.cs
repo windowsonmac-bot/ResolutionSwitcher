@@ -21,8 +21,6 @@ namespace ResolutionSwitcher.Main
         private Label _startupHintLabel = null!;
         private Label _safeModeHintLabel = null!;
         private Label _crashRecoveryHintLabel = null!;
-        private Button _createShortcutButton = null!;
-        private Label _shortcutHintLabel = null!;
         private readonly Dictionary<TextBox, string> _hotkeyDefaults = new Dictionary<TextBox, string>();
         private TextBox _resetHotkeyBox = null!;
         private TextBox _launchHotkeyBox = null!;
@@ -153,46 +151,6 @@ namespace ResolutionSwitcher.Main
             startupLayout.Controls.Add(_startupHintLabel, 0, 1);
             startupGroup.Controls.Add(startupLayout);
 
-            var shortcutGroup = new GroupBox
-            {
-                Text = "Desktop Shortcut",
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Font = new Font("Tahoma", 8f, FontStyle.Bold),
-                Margin = new Padding(0, 0, 0, 10),
-                Padding = new Padding(8, 12, 8, 10)
-            };
-
-            var shortcutLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                AutoSize = true
-            };
-            shortcutLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-
-            _createShortcutButton = new Button
-            {
-                Text = "Create Desktop Shortcut",
-                AutoSize = true,
-                Font = new Font("Tahoma", 8f),
-                Margin = new Padding(0, 0, 0, 4),
-                Padding = new Padding(10, 4, 10, 4)
-            };
-            _createShortcutButton.Click += CreateShortcutButton_Click;
-
-            _shortcutHintLabel = new Label
-            {
-                Text = "Adds a ResolutionSwitcher icon to your desktop, matching the app icon.",
-                AutoSize = true,
-                Font = new Font("Tahoma", 7f, FontStyle.Italic),
-                Margin = new Padding(0, 0, 0, 0)
-            };
-
-            shortcutLayout.Controls.Add(_createShortcutButton, 0, 0);
-            shortcutLayout.Controls.Add(_shortcutHintLabel, 0, 1);
-            shortcutGroup.Controls.Add(shortcutLayout);
 
             var themeGroup = new GroupBox
             {
@@ -246,8 +204,7 @@ namespace ResolutionSwitcher.Main
             themeGroup.Controls.Add(themeFlow);
 
             layout.Controls.Add(startupGroup, 0, 0);
-            layout.Controls.Add(shortcutGroup, 0, 1);
-            layout.Controls.Add(themeGroup, 0, 2);
+            layout.Controls.Add(themeGroup, 0, 1);
             tab.Controls.Add(layout);
             return tab;
         }
@@ -561,26 +518,6 @@ namespace ResolutionSwitcher.Main
             catch { }
         }
 
-        private void CreateShortcutButton_Click(object? sender, EventArgs e)
-        {
-            if (ShortcutManager.CreateDesktopShortcut(out var error))
-            {
-                MessageBox.Show(
-                    $"✓ Desktop shortcut created.\n\nLocation:\n{ShortcutManager.DesktopShortcutPath}\n\nIt uses the same icon as ResolutionSwitcher itself.",
-                    "Shortcut Created",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    $"Could not create the desktop shortcut.\n\n{error}",
-                    "Shortcut Not Created",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-            }
-        }
-
         private void StartupCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
             const string registryPath = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run";
@@ -650,7 +587,6 @@ namespace ResolutionSwitcher.Main
             _tabControl.BackColor = theme.FormBackground;
             _tabControl.ForeColor = theme.TextColor;
             _startupHintLabel.ForeColor = theme.GrayTextColor;
-            _shortcutHintLabel.ForeColor = theme.GrayTextColor;
             _safeModeHintLabel.ForeColor = theme.GrayTextColor;
             _crashRecoveryHintLabel.ForeColor = theme.GrayTextColor;
 

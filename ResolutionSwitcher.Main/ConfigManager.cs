@@ -81,6 +81,9 @@ namespace ResolutionSwitcher.Main
 
             [JsonProperty("launchMode")]
             public string LaunchMode { get; set; } = "autoRestore";
+
+            [JsonProperty("themeName")]
+            public string ThemeName { get; set; } = "";
         }
 
         public class ResolutionPreset
@@ -117,6 +120,9 @@ namespace ResolutionSwitcher.Main
 
             [JsonProperty("pendingRevert")]
             public PendingRevertState PendingRevert { get; set; } = new();
+
+            [JsonProperty("lastActiveProfileName")]
+            public string? LastActiveProfileName { get; set; }
         }
 
         public class BehaviorConfig

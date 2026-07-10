@@ -34,6 +34,7 @@ namespace ResolutionSwitcher.Main
         private Button _darkThemeButton = null!;
         private Button _debugButton = null!;
         private Button _masterResetButton = null!;
+        private Button _shortcutButton = null!;
         private Button _statusClearButton = null!;
         private ComboBox _monitorDropdown = null!;
         private ComboBox _profileDropdown = null!;
@@ -84,8 +85,8 @@ namespace ResolutionSwitcher.Main
 
             Text = "ResolutionSwitcher v1.0";
             Icon = IconProvider.AppIcon;
-            ClientSize = new Size(820, 860);
-            MinimumSize = new Size(630, 700);
+            ClientSize = new Size(820, 920);
+            MinimumSize = new Size(630, 760);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -184,12 +185,23 @@ namespace ResolutionSwitcher.Main
             };
             _masterResetButton.Click += MasterResetBtn_Click;
 
+            _shortcutButton = new Button
+            {
+                Text = "Desktop Shortcut",
+                AutoSize = true,
+                Padding = new Padding(6, 2, 6, 2),
+                Font = new Font("Tahoma", 7.5f),
+                Margin = new Padding(3, 0, 0, 0)
+            };
+            _shortcutButton.Click += ShortcutBtn_Click;
+
             buttonStrip.Controls.Add(_lightThemeButton);
             buttonStrip.Controls.Add(_darkThemeButton);
             buttonStrip.Controls.Add(_aboutButton);
             buttonStrip.Controls.Add(_settingsButton);
             buttonStrip.Controls.Add(_debugButton);
             buttonStrip.Controls.Add(_masterResetButton);
+            buttonStrip.Controls.Add(_shortcutButton);
 
             _titlePanel.Controls.Add(buttonStrip);
             _titlePanel.Controls.Add(_titleLabel);
@@ -299,9 +311,11 @@ namespace ResolutionSwitcher.Main
             _profileDropdown.SelectedIndex = 0;
 
             var newProfileBtn = new Button { Text = "+ New", Width = 52, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(4, 0, 0, 0) };
+            var loadProfileBtn = new Button { Text = "Load", Width = 48, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
             var saveProfileBtn = new Button { Text = "Save", Width = 48, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
             var deleteProfileBtn = new Button { Text = "Delete", Width = 52, Height = 24, Font = new Font("Tahoma", 7.5f), Margin = new Padding(2, 0, 0, 0) };
             newProfileBtn.Click += NewProfileBtn_Click;
+            loadProfileBtn.Click += LoadProfileBtn_Click;
             saveProfileBtn.Click += SaveProfileBtn_Click;
             deleteProfileBtn.Click += DeleteProfileBtn_Click;
             _profileDropdown.SelectedIndexChanged += ProfileDropdown_SelectedIndexChanged;
@@ -317,6 +331,7 @@ namespace ResolutionSwitcher.Main
             };
             profileFlow.Controls.Add(_profileDropdown);
             profileFlow.Controls.Add(newProfileBtn);
+            profileFlow.Controls.Add(loadProfileBtn);
             profileFlow.Controls.Add(saveProfileBtn);
             profileFlow.Controls.Add(deleteProfileBtn);
 
@@ -1247,6 +1262,7 @@ namespace ResolutionSwitcher.Main
             ThemeManager.ApplyButtonStyle(_settingsButton);
             ThemeManager.ApplyButtonStyle(_debugButton);
             ThemeManager.ApplyButtonStyle(_masterResetButton);
+            ThemeManager.ApplyButtonStyle(_shortcutButton);
             ThemeManager.ApplyButtonStyle(_statusClearButton);
 
             ApplyThemeToControls(_scrollPanel, false);
@@ -1822,6 +1838,18 @@ namespace ResolutionSwitcher.Main
             debugForm.ShowDialog(this);
         }
 
+        private void ShortcutBtn_Click(object? sender, EventArgs e)
+        {
+            if (ShortcutManager.CreateDesktopShortcut(out var error))
+            {
+                AppendStatus($"✓ Desktop shortcut created at: {ShortcutManager.DesktopShortcutPath}");
+            }
+            else
+            {
+                AppendStatus($"✗ Could not create desktop shortcut: {error}");
+            }
+        }
+
         private void MasterResetBtn_Click(object? sender, EventArgs e)
         {
             _logger.LogInfo("Master Reset clicked");
@@ -1988,7 +2016,12 @@ namespace ResolutionSwitcher.Main
             try
             {
                 if (_profileDropdown.Items.Count > 0)
-                    _profileDropdown.SelectedIndex = 0;
+                {
+                    var lastActiveIndex = !string.IsNullOrEmpty(config.LastActiveProfileName)
+                        ? _profileDropdown.Items.IndexOf(config.LastActiveProfileName)
+                        : -1;
+                    _profileDropdown.SelectedIndex = lastActiveIndex >= 0 ? lastActiveIndex : 0;
+                }
             }
             finally
             {
@@ -2044,6 +2077,8 @@ namespace ResolutionSwitcher.Main
             }
             catch (InvalidOperationException) { /* ignore parse errors during save */ }
             catch (Exception ex) { _logger.LogError("SaveSettingsToProfile error", ex); }
+
+            profile.ThemeName = ThemeManager.CurrentTheme.ToString();
         }
 
         private void NewProfileBtn_Click(object? sender, EventArgs e)
@@ -2113,6 +2148,36 @@ namespace ResolutionSwitcher.Main
             AppendStatus($"Profile '{name}' deleted.");
         }
 
+        private void LoadProfileBtn_Click(object? sender, EventArgs e)
+        {
+            var name = _profileDropdown.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                AppendStatus("No profile selected to load.");
+                return;
+            }
+
+            if (_configManager == null) return;
+            var config = _configManager.GetConfig();
+            var profile = config.Profiles.FirstOrDefault(p => p.Name == name);
+            if (profile == null)
+            {
+                AppendStatus($"Profile '{name}' not found.");
+                return;
+            }
+
+            try
+            {
+                LoadProfileIntoUI(profile);
+                AppendStatus($"✓ Profile '{name}' loaded.");
+            }
+            catch (Exception ex)
+            {
+                AppendStatus($"✗ Failed to load profile: {ex.Message}");
+                _logger.LogError("LoadProfileBtn_Click error", ex);
+            }
+        }
+
         private void SaveProfileBtn_Click(object? sender, EventArgs e)
         {
             var name = _profileDropdown.SelectedItem as string;
@@ -2154,6 +2219,9 @@ namespace ResolutionSwitcher.Main
             var profile = GetActiveProfile(config);
             _activeProfileName = profile?.Name;
             if (profile == null) return;
+
+            config.LastActiveProfileName = profile.Name;
+            _configManager.Save();
 
             LoadProfileIntoUI(profile);
         }
@@ -2232,6 +2300,13 @@ namespace ResolutionSwitcher.Main
                         instantKillRadio.Checked = true;
                     else
                         autoRestoreRadio.Checked = true;
+                }
+
+                if (!string.IsNullOrEmpty(profile.ThemeName)
+                    && Enum.TryParse<AppTheme>(profile.ThemeName, out var savedTheme)
+                    && savedTheme != ThemeManager.CurrentTheme)
+                {
+                    ThemeManager.SetTheme(savedTheme);
                 }
             }
             finally
