@@ -9,7 +9,8 @@ A completely offline, self-contained Windows utility that instantly switches you
 ✅ **Instant Resolution Switching** - Change to stretched ratios in milliseconds
 ✅ **Auto-Revert or Manual Reset** - Choose your preferred mode
 ✅ **Multi-Monitor Support** - Works with any monitor configuration
-✅ **Game Profiles** - Save different settings per game
+✅ **Game Profiles** - Save, load, and switch between per-game settings (including per-profile theme)
+✅ **Global Hotkeys** - Reset, launch, theme switching, and emergency reset, all rebindable
 ✅ **Zero System Impact** - No registry modifications, completely portable
 ✅ **Simple Distribution** - Just two self-contained .exe files, no installer, no clutter
 ✅ **Anticheat Safe** - Works with Valorant, CS2, FACEIT, 5E Arena
@@ -21,10 +22,18 @@ A completely offline, self-contained Windows utility that instantly switches you
 
 1. Download and unzip - you'll only find two files: `ResolutionSwitcher.exe` and `ResolutionSwitcher.Monitor.exe`
 2. Run `ResolutionSwitcher.exe`
-3. A desktop shortcut is created automatically the first time you run it
+3. A desktop shortcut is created automatically the first time you run it (or create one anytime via the **Desktop Shortcut** button in the main window)
 4. App auto-detects your monitors and default resolution
-5. Select your game and target resolution
+5. Select or create a profile, and choose your target resolution
 6. Click "LAUNCH GAME & APPLY" or "APPLY ONLY"
+
+### Profiles
+
+- **New** - create a profile from your current settings
+- **Load** - switch to a saved profile and apply its resolution, refresh rate, and theme
+- **Save** - update the active profile with your current settings
+- **Delete** - remove a profile
+- The last profile you used is automatically restored the next time you open the app
 
 ### Two Launch Modes
 
@@ -40,6 +49,18 @@ A completely offline, self-contained Windows utility that instantly switches you
 - Zero background processes
 - Manual click "RESET" to revert when done
 
+### Global Hotkeys
+
+Default combinations (rebindable in Settings):
+
+| Action | Default Hotkey |
+|---|---|
+| Reset resolution | `Ctrl+Alt+R` |
+| Launch game | `Ctrl+Alt+L` |
+| Switch to Light theme | `Ctrl+Alt+1` |
+| Switch to Dark theme | `Ctrl+Alt+2` |
+| Emergency reset | `Ctrl+Alt+F12` |
+
 ## Configuration
 
 All settings are stored in `config.json` in the same folder as the .exe.
@@ -48,9 +69,9 @@ All settings are stored in `config.json` in the same folder as the .exe.
 
 Just delete the folder. No registry entries, no leftover files.
 
-### Factory Reset
+### Master / Factory Reset
 
-Click Settings (⚙️) → Delete the `config.json` file or use the Factory Reset button in settings.
+Use the **Master Reset** button in the main window to restore the default profiles and hotkeys immediately (no restart needed), or delete `config.json` for a full factory reset.
 
 ## System Requirements
 
@@ -74,7 +95,7 @@ Click the **?** button in the app for detailed information about:
 - **Instant Kill Mode:** 0% CPU, 0% RAM while gaming
 - **FPS Impact:** Zero (kernel-level waiting, no polling)
 - **Network:** 0 bytes (completely offline)
-- **Disk footprint:** Just 2 files (~60-70 MB combined, self-contained .NET 8 runtime included)
+- **Disk footprint:** Just 2 files (~90 MB combined, self-contained .NET 8 runtime included)
 
 ## Anticheat Safety
 
@@ -94,4 +115,4 @@ For issues or feature requests, check the About section for detailed information
 
 ---
 
-**Version 1.0.2** | Completely Portable | Self-Contained | Two Files, Zero Clutter
+**Version 1.0.3** | Completely Portable | Self-Contained | Two Files, Zero Clutter
