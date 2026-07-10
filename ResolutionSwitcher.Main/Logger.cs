@@ -17,7 +17,7 @@ namespace ResolutionSwitcher.Main
 
         private Logger()
         {
-            _logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log");
+            _logPath = Path.Combine(AppPaths.ExecutableDirectory, "debug.log");
             _enableLogging = false; // Disabled by default
         }
 

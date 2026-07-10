@@ -185,7 +185,7 @@ namespace ResolutionSwitcher.Main
 
         public ConfigManager()
         {
-            _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ConfigFileName);
+            _configPath = Path.Combine(AppPaths.ExecutableDirectory, ConfigFileName);
             _config = Load();
             
             // Apply debug logging setting from config

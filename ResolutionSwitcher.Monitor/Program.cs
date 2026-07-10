@@ -162,7 +162,8 @@ static class Program
     {
         try
         {
-            var logPath = Path.Combine(AppContext.BaseDirectory, "monitor-helper.log");
+            var exeDir = System.IO.Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+            var logPath = Path.Combine(exeDir, "monitor-helper.log");
             File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
         }
         catch { }

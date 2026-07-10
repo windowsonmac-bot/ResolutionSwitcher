@@ -70,7 +70,7 @@ namespace ResolutionSwitcher.Main
             InputBorderColor = ColorTranslator.FromHtml("#5A5A7E")
         };
 
-        private static readonly string ThemeConfigFilePath = Path.Combine(AppContext.BaseDirectory, "theme.cfg");
+        private static readonly string ThemeConfigFilePath = Path.Combine(AppPaths.ExecutableDirectory, "theme.cfg");
 
         static ThemeManager()
         {

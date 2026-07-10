@@ -94,4 +94,4 @@ For issues or feature requests, check the About section for detailed information
 
 ---
 
-**Version 1.0.1** | Completely Portable | Self-Contained | Two Files, Zero Clutter
+**Version 1.0.2** | Completely Portable | Self-Contained | Two Files, Zero Clutter

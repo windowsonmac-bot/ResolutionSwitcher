@@ -14,6 +14,7 @@ namespace ResolutionSwitcher.Main
         private const int DefaultPresetIndex = 3;
         private const string DefaultRefreshHz = "240";
         private ConfigManager? _configManager;
+        private string? _lastHelperLookupPath;
         private readonly List<DisplayManager.MonitorInfo> _detectedMonitors;
         private static readonly Logger _logger = Logger.Instance;
         private Panel _titlePanel = null!;
@@ -961,12 +962,13 @@ namespace ResolutionSwitcher.Main
             try
             {
                 var helperPath = System.IO.Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
+                    AppPaths.ExecutableDirectory,
                     "ResolutionSwitcher.Monitor.exe");
 
                 if (!System.IO.File.Exists(helperPath))
                 {
                     _logger.LogError($"Monitor helper not found at: {helperPath}");
+                    _lastHelperLookupPath = helperPath;
                     return false;
                 }
 
@@ -1597,7 +1599,7 @@ namespace ResolutionSwitcher.Main
                             }
                             else
                             {
-                                AppendStatus("⚠ Helper exe not found. Auto-restore will not work. Place ResolutionSwitcher.Monitor.exe in the same folder.");
+                                AppendStatus($"⚠ Helper exe not found at: {_lastHelperLookupPath}. Auto-restore will not work.");
                                 statusWindow?.AddStep("⚠", "Helper exe not found. Auto-restore will not work.");
                             }
                         }
